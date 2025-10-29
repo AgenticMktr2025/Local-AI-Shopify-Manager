@@ -22,19 +22,25 @@ class AIOrchestrator:
         try:
             import ollama
 
-            response = await asyncio.wait_for(ollama.ps(), timeout=2)
-            return "models" in response and isinstance(response["models"], list)
+            response = await asyncio.wait_for(ollama.aio.ps(), timeout=2)
+            return (
+                "models" in response
+                and isinstance(response["models"], list)
+                and response["models"]
+            )
         except ImportError as e:
-            logging.exception(f"Ollama not imported, falling back: {e}")
-            return False
-        except (asyncio.TimeoutError, ollama.RequestError) as e:
             logging.exception(
-                f"Ollama not reachable, falling back to other models: {e}"
+                f"Ollama python package not installed, falling back. Error: {e}"
+            )
+            return False
+        except (asyncio.TimeoutError, ollama.ResponseError) as e:
+            logging.exception(
+                f"Ollama server not reachable, falling back to other models. Error: {e}"
             )
             return False
         except Exception as e:
             logging.exception(
-                f"An unexpected error occurred while checking for Ollama: {e}"
+                f"An unexpected error occurred while checking for Ollama, falling back. Error: {e}"
             )
             return False
 
@@ -56,7 +62,6 @@ class ChatState(rx.State):
     """Manages the chat interface and AI agent interaction."""
 
     messages: list[dict[str, str]] = []
-    current_question: str = ""
     is_processing: bool = False
     current_model_name: str = ""
     _agent: Agent | None = None
@@ -85,6 +90,7 @@ class ChatState(rx.State):
         question = form_data.get("question", "").strip()
         if not question or self.is_processing:
             return
+        yield
         if not self._agent:
             await self.on_load()
             if not self._agent:
@@ -97,7 +103,6 @@ class ChatState(rx.State):
                 return
         self.is_processing = True
         self.messages.append({"role": "user", "content": question})
-        self.current_question = ""
         yield
         try:
             history = [Message(**msg) for msg in self.messages[:-1]]

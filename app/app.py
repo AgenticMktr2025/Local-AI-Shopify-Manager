@@ -70,8 +70,6 @@ def chat() -> rx.Component:
                         placeholder="Ask a question...",
                         class_name="flex-1 p-2 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500",
                         disabled=ChatState.is_processing,
-                        default_value=ChatState.current_question,
-                        key=ChatState.current_question,
                     ),
                     rx.el.button(
                         rx.icon("arrow-up", size=20),
