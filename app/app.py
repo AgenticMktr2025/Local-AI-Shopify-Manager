@@ -5,13 +5,53 @@ from app.components.sidebar import page_layout
 from app.pages.settings import settings_page
 
 
+def quick_link_card(icon: str, title: str, description: str, href: str) -> rx.Component:
+    return rx.el.a(
+        rx.el.div(
+            rx.icon(icon, class_name="h-8 w-8 text-blue-500"),
+            rx.el.h3(title, class_name="text-lg font-semibold text-gray-800"),
+            rx.el.p(description, class_name="text-sm text-gray-500"),
+            class_name="flex flex-col items-start gap-2",
+        ),
+        href=href,
+        class_name="block p-6 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-lg transition-shadow duration-200",
+    )
+
+
 def index() -> rx.Component:
     main_content = rx.el.div(
-        rx.el.h1("Dashboard", class_name="text-3xl font-semibold text-gray-800"),
-        rx.el.p(
-            "Welcome to your Shopify AI Management App.", class_name="text-gray-600"
+        rx.el.div(
+            rx.el.h1(
+                "Shopify AI Management", class_name="text-4xl font-bold text-gray-900"
+            ),
+            rx.el.p(
+                "Your intelligent assistant for managing your Shopify store.",
+                class_name="text-lg text-gray-600 mt-2",
+            ),
+            class_name="text-center",
         ),
-        class_name="flex flex-col items-start space-y-4",
+        rx.el.div(
+            quick_link_card(
+                "message-circle",
+                "AI Chat",
+                "Interact with your store using natural language.",
+                "/chat",
+            ),
+            quick_link_card(
+                "settings",
+                "Settings",
+                "Configure API keys and store credentials.",
+                "/settings",
+            ),
+            quick_link_card(
+                "layout-dashboard",
+                "Dashboard (Coming Soon)",
+                "View real-time KPIs and store metrics.",
+                "#",
+            ),
+            class_name="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12",
+        ),
+        class_name="flex flex-col items-center justify-center h-full p-8",
     )
     return page_layout(main_content)
 

@@ -33,13 +33,13 @@ def sidebar() -> rx.Component:
             rx.el.div(
                 rx.el.nav(
                     nav_item(
-                        "home", "Dashboard", "/", rx.State.router.page.path == "/"
-                    ),
-                    nav_item(
                         "message-circle",
                         "Chat",
                         "/chat",
                         rx.State.router.page.path == "/chat",
+                    ),
+                    nav_item(
+                        "home", "Dashboard", "/", rx.State.router.page.path == "/"
                     ),
                     nav_item(
                         "settings",
