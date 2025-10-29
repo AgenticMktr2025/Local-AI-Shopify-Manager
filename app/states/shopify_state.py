@@ -46,7 +46,10 @@ class ShopifyState(rx.State):
             }
             """
             result = shopify.GraphQL().execute(query)
-            shop_data = result.get("data", {}).get("shop", {})
+            import json
+
+            parsed_result = json.loads(result)
+            shop_data = parsed_result.get("data", {}).get("shop", {})
             shop_name = shop_data.get("name")
             if shop_name:
                 self.test_result = {

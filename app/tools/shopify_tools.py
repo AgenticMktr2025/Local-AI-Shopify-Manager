@@ -53,7 +53,7 @@ class ShopifyTools(Toolkit):
             query_filter = f"title:*{search_title}*" if search_title else ""
             graphql_query = f'\n            {{\n              products(first: {limit}, query: "{query_filter}") {{\n                edges {{\n                  node {{\n                    id\n                    title\n                    handle\n                    status\n                    totalInventory\n                  }}\n                }}\n              }}\n            }}\n            '
             result = shopify.GraphQL().execute(graphql_query)
-            return str(result)
+            return result
         except Exception as e:
             logging.exception(f"Error getting products: {e}")
             return f"Error: {e}"
@@ -68,7 +68,7 @@ class ShopifyTools(Toolkit):
         try:
             graphql_query = f'\n            {{\n              product(id: "{product_id}") {{\n                id\n                title\n                descriptionHtml\n                status\n                vendor\n                productType\n                totalInventory\n              }}\n            }}\n            '
             result = shopify.GraphQL().execute(graphql_query)
-            return str(result)
+            return result
         except Exception as e:
             logging.exception(f"Error getting product by id: {e}")
             return f"Error: {e}"
@@ -115,7 +115,7 @@ class ShopifyTools(Toolkit):
             result = shopify.GraphQL().execute(
                 graphql_mutation, variables={"input": input_vars}
             )
-            return str(result)
+            return result
         except Exception as e:
             logging.exception(f"Error creating product: {e}")
             return f"Error: {e}"
@@ -132,7 +132,7 @@ class ShopifyTools(Toolkit):
         try:
             graphql_query = f'''\n            {{\n              customers(first: {limit}, query: "{search_query or ""}") {{\n                edges {{\n                  node {{\n                    id\n                    firstName\n                    lastName\n                    email\n                    phone\n                  }}\n                }}\n              }}\n            }}\n            '''
             result = shopify.GraphQL().execute(graphql_query)
-            return str(result)
+            return result
         except Exception as e:
             logging.exception(f"Error getting customers: {e}")
             return f"Error: {e}"
@@ -147,7 +147,7 @@ class ShopifyTools(Toolkit):
         try:
             graphql_query = f'\n            {{\n              customer(id: "{customer_id}") {{\n                orders(first: {limit}) {{\n                  edges {{\n                    node {{\n                      id\n                      name\n                      totalPriceSet {{ shopMoney {{ amount currencyCode }} }}\n                      displayFinancialStatus\n                      displayFulfillmentStatus\n                    }}\n                  }}\n                }}\n              }}\n            }}\n            '
             result = shopify.GraphQL().execute(graphql_query)
-            return str(result)
+            return result
         except Exception as e:
             logging.exception(f"Error getting customer orders: {e}")
             return f"Error: {e}"
@@ -192,7 +192,7 @@ class ShopifyTools(Toolkit):
             result = shopify.GraphQL().execute(
                 graphql_mutation, variables={"input": input_vars}
             )
-            return str(result)
+            return result
         except Exception as e:
             logging.exception(f"Error updating customer: {e}")
             return f"Error: {e}"
@@ -207,7 +207,7 @@ class ShopifyTools(Toolkit):
         try:
             graphql_query = f'\n            {{\n              orders(first: {limit}, query: "status:{status}") {{\n                edges {{\n                  node {{\n                    id\n                    name\n                    displayFinancialStatus\n                    displayFulfillmentStatus\n                    totalPriceSet {{\n                      shopMoney {{\n                        amount\n                        currencyCode\n                      }}\n                    }}\n                  }}\n                }}\n              }}\n            }}\n            '
             result = shopify.GraphQL().execute(graphql_query)
-            return str(result)
+            return result
         except Exception as e:
             logging.exception(f"Error getting orders: {e}")
             return f"Error: {e}"
@@ -222,7 +222,7 @@ class ShopifyTools(Toolkit):
         try:
             graphql_query = f'\n            {{\n              order(id: "{order_id}") {{\n                id\n                name\n                note\n                displayFinancialStatus\n                displayFulfillmentStatus\n                totalPriceSet {{ shopMoney {{ amount currencyCode }} }}\n                customer {{ id firstName lastName email }}\n              }}\n            }}\n            '
             result = shopify.GraphQL().execute(graphql_query)
-            return str(result)
+            return result
         except Exception as e:
             logging.exception(f"Error getting order by id: {e}")
             return f"Error: {e}"
@@ -264,7 +264,7 @@ class ShopifyTools(Toolkit):
             result = shopify.GraphQL().execute(
                 graphql_mutation, variables={"input": input_vars}
             )
-            return str(result)
+            return result
         except Exception as e:
             logging.exception(f"Error updating order: {e}")
             return f"Error: {e}"
