@@ -1,6 +1,7 @@
 import reflex as rx
 from app.states.settings_state import SettingsState
 from app.states.shopify_state import ShopifyState
+from app.states.ai_model_state import AIModelState
 from app.components.sidebar import page_layout
 
 
@@ -129,23 +130,121 @@ def settings_page() -> rx.Component:
             rx.el.div(
                 rx.el.h2("AI Model API Keys", class_name="text-lg font-semibold mb-4"),
                 rx.el.div(
-                    api_key_input(
-                        "OpenAI API Key",
-                        "openai_api_key",
-                        SettingsState.openai_api_key,
-                        SettingsState.set_openai_api_key,
-                        SettingsState.show_openai_key,
-                        lambda: SettingsState.toggle_visibility("openai"),
+                    rx.el.div(
+                        api_key_input(
+                            "OpenAI API Key",
+                            "openai_api_key",
+                            SettingsState.openai_api_key,
+                            SettingsState.set_openai_api_key,
+                            SettingsState.show_openai_key,
+                            lambda: SettingsState.toggle_visibility("openai"),
+                        ),
+                        rx.el.button(
+                            "Test Key",
+                            on_click=lambda: AIModelState.test_api_key("openai"),
+                            class_name="mt-2 w-full bg-gray-200 text-gray-700 p-2 rounded-md hover:bg-gray-300 disabled:bg-gray-100",
+                            disabled=~SettingsState.is_openai_key_set
+                            | AIModelState.is_testing_openai,
+                        ),
+                        rx.cond(
+                            AIModelState.is_testing_openai,
+                            rx.el.div(
+                                rx.spinner(class_name="h-4 w-4 text-gray-500"),
+                                rx.el.p(
+                                    "Testing...", class_name="text-sm text-gray-500"
+                                ),
+                                class_name="flex items-center gap-2 mt-2",
+                            ),
+                            None,
+                        ),
+                        rx.cond(
+                            AIModelState.openai_test_result,
+                            rx.cond(
+                                AIModelState.openai_test_result["success"],
+                                rx.el.div(
+                                    rx.icon(
+                                        "check_check",
+                                        size=16,
+                                        class_name="text-green-500",
+                                    ),
+                                    rx.el.p(
+                                        "Success! Key is valid.",
+                                        class_name="text-sm text-green-600",
+                                    ),
+                                    class_name="flex items-center gap-2 mt-2",
+                                ),
+                                rx.el.div(
+                                    rx.icon(
+                                        "circle_x", size=16, class_name="text-red-500"
+                                    ),
+                                    rx.el.p(
+                                        f"Failed: {AIModelState.openai_test_result['error']}",
+                                        class_name="text-sm text-red-600",
+                                    ),
+                                    class_name="flex items-center gap-2 mt-2",
+                                ),
+                            ),
+                            None,
+                        ),
+                        class_name="mb-4",
                     ),
-                    class_name="mb-4",
-                ),
-                api_key_input(
-                    "OpenRouter API Key",
-                    "openrouter_api_key",
-                    SettingsState.openrouter_api_key,
-                    SettingsState.set_openrouter_api_key,
-                    SettingsState.show_openrouter_key,
-                    lambda: SettingsState.toggle_visibility("openrouter"),
+                    rx.el.div(
+                        api_key_input(
+                            "OpenRouter API Key",
+                            "openrouter_api_key",
+                            SettingsState.openrouter_api_key,
+                            SettingsState.set_openrouter_api_key,
+                            SettingsState.show_openrouter_key,
+                            lambda: SettingsState.toggle_visibility("openrouter"),
+                        ),
+                        rx.el.button(
+                            "Test Key",
+                            on_click=lambda: AIModelState.test_api_key("openrouter"),
+                            class_name="mt-2 w-full bg-gray-200 text-gray-700 p-2 rounded-md hover:bg-gray-300 disabled:bg-gray-100",
+                            disabled=~SettingsState.is_openrouter_key_set
+                            | AIModelState.is_testing_openrouter,
+                        ),
+                        rx.cond(
+                            AIModelState.is_testing_openrouter,
+                            rx.el.div(
+                                rx.spinner(class_name="h-4 w-4 text-gray-500"),
+                                rx.el.p(
+                                    "Testing...", class_name="text-sm text-gray-500"
+                                ),
+                                class_name="flex items-center gap-2 mt-2",
+                            ),
+                            None,
+                        ),
+                        rx.cond(
+                            AIModelState.openrouter_test_result,
+                            rx.cond(
+                                AIModelState.openrouter_test_result["success"],
+                                rx.el.div(
+                                    rx.icon(
+                                        "check_check",
+                                        size=16,
+                                        class_name="text-green-500",
+                                    ),
+                                    rx.el.p(
+                                        "Success! Key is valid.",
+                                        class_name="text-sm text-green-600",
+                                    ),
+                                    class_name="flex items-center gap-2 mt-2",
+                                ),
+                                rx.el.div(
+                                    rx.icon(
+                                        "circle_x", size=16, class_name="text-red-500"
+                                    ),
+                                    rx.el.p(
+                                        f"Failed: {AIModelState.openrouter_test_result['error']}",
+                                        class_name="text-sm text-red-600",
+                                    ),
+                                    class_name="flex items-center gap-2 mt-2",
+                                ),
+                            ),
+                            None,
+                        ),
+                    ),
                 ),
                 class_name="p-6 bg-white rounded-lg border",
             ),

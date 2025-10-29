@@ -21,6 +21,16 @@ class SettingsState(rx.State):
         """Check if both Shopify store URL and access token are configured."""
         return bool(self.shopify_store_url and self.shopify_access_token)
 
+    @rx.var
+    def is_openai_key_set(self) -> bool:
+        """Check if OpenAI API key is set."""
+        return bool(self.openai_api_key)
+
+    @rx.var
+    def is_openrouter_key_set(self) -> bool:
+        """Check if OpenRouter API key is set."""
+        return bool(self.openrouter_api_key)
+
     @rx.event
     def toggle_visibility(self, key: str):
         if key == "shopify":

@@ -1,6 +1,6 @@
 # Shopify AI Management App - Development Plan
 
-## Current Status: Phase 3 Complete ✅
+## Current Status: Phase 3 Complete ✅ + Settings Enhancement ✅
 
 ---
 
@@ -37,11 +37,16 @@
 - [x] Implement GraphQL client for Admin API
 - [x] Create ShopifyState with connection testing
 - [x] Add error handling for API rate limits and auth failures
+- [x] **NEW**: Add AI model API key testing functionality
+- [x] **NEW**: Create AIModelState for testing OpenAI and OpenRouter keys
+- [x] **NEW**: Add individual "Test Key" buttons for each AI model
+- [x] **NEW**: Display success/error indicators for API key validation
 
 **Status**: ✅ COMPLETE
 - Settings page fully functional at `/settings` route
 - Shopify credentials management implemented
 - AI model API key configuration (OpenAI, OpenRouter)
+- **AI model key testing with visual feedback** ✅
 - Shopify connection testing with visual feedback
 - GraphQL client ready for queries
 
@@ -76,7 +81,7 @@
 - Tools conditionally loaded based on credential availability
 - GraphQL queries working for products, customers, and orders
 - Proper error handling and session management
-- **Next**: Ready for natural language testing with real Shopify store
+- **Settings enhancement complete with AI key testing** ✅
 
 ---
 
@@ -124,18 +129,16 @@
 3. **9 Shopify Tools** for product, customer, and order management
 4. **Agno Integration** with DuckDuckGo and Shopify toolkits
 5. **Chat Interface** with streaming responses and conversation history
+6. **AI Model Key Testing** with OpenAI and OpenRouter validation ✅
 
-### 🎯 Next Steps:
-- **Configure Shopify credentials** in Settings page
-- **Test natural language queries** like:
-  - "Show me all products"
-  - "Find customers with email containing 'john'"
-  - "Get orders from last week"
-  - "Create a new product called 'Test Product'"
-- **Build KPI Dashboard** (Phase 4)
+### 🎯 Recent Enhancement:
+- **AI Model API Key Testing**: Added individual "Test Key" buttons for OpenAI and OpenRouter
+- **Visual Feedback**: Loading states and success/error indicators for key validation
+- **AIModelState**: New state class to manage API key testing asynchronously
 
 ### 📊 Technical Details:
 - **Shopify Tools**: 9 tools using GraphQL Admin API
 - **AI Models**: 3-tier fallback system (Ollama, OpenRouter, OpenAI)
 - **Chat Framework**: Agno with tool calling support
 - **API Integration**: ShopifyAPI v12.7.0 with GraphQL
+- **API Key Testing**: OpenAI and OpenRouter key validation via models.list() endpoint
