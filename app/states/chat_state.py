@@ -22,18 +22,14 @@ class AIOrchestrator:
         try:
             import ollama
 
-            response = await asyncio.wait_for(ollama.aio.ps(), timeout=2)
-            return (
-                "models" in response
-                and isinstance(response["models"], list)
-                and response["models"]
-            )
+            response = await asyncio.wait_for(asyncio.to_thread(ollama.list), timeout=2)
+            return bool(response.get("models"))
         except ImportError as e:
             logging.exception(
                 f"Ollama python package not installed, falling back. Error: {e}"
             )
             return False
-        except (asyncio.TimeoutError, ollama.ResponseError) as e:
+        except asyncio.TimeoutError as e:
             logging.exception(
                 f"Ollama server not reachable, falling back to other models. Error: {e}"
             )
@@ -52,6 +48,7 @@ class AIOrchestrator:
             return OpenRouter(
                 id="mistralai/mistral-7b-instruct",
                 api_key=self.settings.openrouter_api_key,
+                base_url="https://openrouter.ai/api/v1",
             )
         if self.settings.openai_api_key:
             return OpenAIChat(id="gpt-3.5-turbo", api_key=self.settings.openai_api_key)
