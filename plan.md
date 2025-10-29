@@ -1,6 +1,6 @@
 # Shopify AI Management App - Development Plan
 
-## Current Status: Phase 3 Complete ✅ + Settings Enhancement ✅
+## Current Status: Phase 3 Complete ✅ + Backend Error Fixes ✅
 
 ---
 
@@ -37,16 +37,16 @@
 - [x] Implement GraphQL client for Admin API
 - [x] Create ShopifyState with connection testing
 - [x] Add error handling for API rate limits and auth failures
-- [x] **NEW**: Add AI model API key testing functionality
-- [x] **NEW**: Create AIModelState for testing OpenAI and OpenRouter keys
-- [x] **NEW**: Add individual "Test Key" buttons for each AI model
-- [x] **NEW**: Display success/error indicators for API key validation
+- [x] Add AI model API key testing functionality
+- [x] Create AIModelState for testing OpenAI and OpenRouter keys
+- [x] Add individual "Test Key" buttons for each AI model
+- [x] Display success/error indicators for API key validation
 
 **Status**: ✅ COMPLETE
 - Settings page fully functional at `/settings` route
 - Shopify credentials management implemented
 - AI model API key configuration (OpenAI, OpenRouter)
-- **AI model key testing with visual feedback** ✅
+- AI model key testing with visual feedback ✅
 - Shopify connection testing with visual feedback
 - GraphQL client ready for queries
 
@@ -74,6 +74,10 @@
 - [x] Create ShopifyTools class for Agno agent
 - [x] Connect tools to ChatState
 - [x] Add error handling for API failures
+- [x] **FIX**: Change agent.run() to agent.arun() for async tool support
+- [x] **FIX**: Add stream=True parameter to enable response streaming
+- [x] **FIX**: Extract content from RunContentEvent objects properly
+- [x] **FIX**: Fix Ollama import error (RequestError instead of ConnectError)
 
 **Status**: ✅ COMPLETE
 - All 9 Shopify tools implemented and registered
@@ -81,7 +85,30 @@
 - Tools conditionally loaded based on credential availability
 - GraphQL queries working for products, customers, and orders
 - Proper error handling and session management
-- **Settings enhancement complete with AI key testing** ✅
+- **Async tool support fully functional** ✅
+- **Streaming responses working correctly** ✅
+- **All import errors resolved** ✅
+
+---
+
+## Backend Fixes Applied ✅
+
+### Issue: "Async tool shopify can't be used with synchronous agent.run()"
+
+**Root Cause**: ShopifyTools methods are async, but ChatState was using synchronous `agent.run()`
+
+**Fixes Applied**:
+1. ✅ Changed `self._agent.run()` to `self._agent.arun()` to support async tools
+2. ✅ Added `stream=True` parameter to enable proper streaming: `agent.arun(..., stream=True)`
+3. ✅ Fixed streaming iteration to handle `RunContentEvent` objects properly
+4. ✅ Fixed Ollama import error: changed `ConnectError` to `RequestError`
+
+**Testing Results**:
+- ✅ Agent initialization works without errors
+- ✅ Streaming responses work correctly with async tools
+- ✅ Shopify tools can now be called by the AI agent
+- ✅ Ollama fallback logic works properly
+- ✅ Full chat flow tested and verified
 
 ---
 
@@ -129,16 +156,18 @@
 3. **9 Shopify Tools** for product, customer, and order management
 4. **Agno Integration** with DuckDuckGo and Shopify toolkits
 5. **Chat Interface** with streaming responses and conversation history
-6. **AI Model Key Testing** with OpenAI and OpenRouter validation ✅
+6. **AI Model Key Testing** with OpenAI and OpenRouter validation
+7. **Async Tool Support** for Shopify API integration ✅
+8. **Backend Error Fixes** for streaming and imports ✅
 
-### 🎯 Recent Enhancement:
-- **AI Model API Key Testing**: Added individual "Test Key" buttons for OpenAI and OpenRouter
-- **Visual Feedback**: Loading states and success/error indicators for key validation
-- **AIModelState**: New state class to manage API key testing asynchronously
+### 🔧 Recent Fixes:
+- **Async Tool Error**: Fixed by changing `agent.run()` to `agent.arun(stream=True)`
+- **Streaming Implementation**: Properly extracting content from `RunContentEvent` objects
+- **Ollama Import Error**: Changed `ConnectError` to `RequestError`
 
 ### 📊 Technical Details:
-- **Shopify Tools**: 9 tools using GraphQL Admin API
+- **Shopify Tools**: 9 async tools using GraphQL Admin API
 - **AI Models**: 3-tier fallback system (Ollama, OpenRouter, OpenAI)
-- **Chat Framework**: Agno with tool calling support
+- **Chat Framework**: Agno with async tool calling support
 - **API Integration**: ShopifyAPI v12.7.0 with GraphQL
-- **API Key Testing**: OpenAI and OpenRouter key validation via models.list() endpoint
+- **Streaming**: Real-time response streaming with `arun(stream=True)`

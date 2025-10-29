@@ -21,14 +21,13 @@ class AIOrchestrator:
         """Check if the Ollama server is running and has models."""
         try:
             import ollama
-            from ollama import ConnectError
 
             response = await asyncio.wait_for(ollama.ps(), timeout=2)
             return "models" in response and isinstance(response["models"], list)
         except ImportError as e:
             logging.exception(f"Ollama not imported, falling back: {e}")
             return False
-        except (asyncio.TimeoutError, ConnectError) as e:
+        except (asyncio.TimeoutError, ollama.RequestError) as e:
             logging.exception(
                 f"Ollama not reachable, falling back to other models: {e}"
             )
@@ -99,16 +98,19 @@ class ChatState(rx.State):
         yield
         try:
             history = [Message(**msg) for msg in self.messages[:-1]]
-            response_stream = self._agent.run(
-                self.messages[-1]["content"], history=history
+            response_stream = self._agent.arun(
+                self.messages[-1]["content"], history=history, stream=True
             )
             self.messages.append({"role": "assistant", "content": ""})
             yield
             full_response = ""
-            async for chunk in response_stream:
-                full_response += cast(str, chunk)
-                self.messages[-1]["content"] = full_response
-                yield
+            async for event in cast(AsyncGenerator, response_stream):
+                if hasattr(event, "content") and event.content:
+                    chunk = event.content
+                    if isinstance(chunk, str):
+                        full_response += chunk
+                        self.messages[-1]["content"] = full_response
+                        yield
         except Exception as e:
             logging.exception(f"Error during agent execution: {e}")
             self.messages.append(
