@@ -1,13 +1,17 @@
 import reflex as rx
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class SettingsState(rx.State):
     """Manages app settings, including API keys and Shopify credentials."""
 
-    shopify_store_url: str = ""
-    shopify_access_token: str = ""
-    openai_api_key: str = ""
-    openrouter_api_key: str = ""
+    shopify_store_url: str = os.getenv("SHOPIFY_STORE_URL") or ""
+    shopify_access_token: str = os.getenv("SHOPIFY_ACCESS_TOKEN") or ""
+    openai_api_key: str = os.getenv("OPENAI_API_KEY") or ""
+    openrouter_api_key: str = os.getenv("OPENROUTER_API_KEY") or ""
     show_shopify_token: bool = False
     show_openai_key: bool = False
     show_openrouter_key: bool = False

@@ -18,15 +18,25 @@ class AIOrchestrator:
         self.client_cache: dict[str, OpenAIChat | Ollama | OpenRouter] = {}
 
     async def _is_ollama_available(self) -> bool:
-        """Check if the Ollama server is running."""
+        """Check if the Ollama server is running and has models."""
         try:
             import ollama
+            from ollama import ConnectError
 
-            await asyncio.wait_for(ollama.ps(), timeout=2)
-            return True
-        except (ImportError, asyncio.TimeoutError, Exception) as e:
-            if not isinstance(e, ImportError):
-                logging.exception(f"Ollama check failed: {e}")
+            response = await asyncio.wait_for(ollama.ps(), timeout=2)
+            return "models" in response and isinstance(response["models"], list)
+        except ImportError as e:
+            logging.exception(f"Ollama not imported, falling back: {e}")
+            return False
+        except (asyncio.TimeoutError, ConnectError) as e:
+            logging.exception(
+                f"Ollama not reachable, falling back to other models: {e}"
+            )
+            return False
+        except Exception as e:
+            logging.exception(
+                f"An unexpected error occurred while checking for Ollama: {e}"
+            )
             return False
 
     async def get_best_model(self) -> OpenAIChat | Ollama | OpenRouter | None:
