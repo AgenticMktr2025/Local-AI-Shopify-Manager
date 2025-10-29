@@ -1,6 +1,6 @@
 # Shopify AI Management App - Development Plan
 
-## Current Status: Phase 3 Complete ✅ + Backend Error Fixes ✅
+## Current Status: Phase 3 Complete ✅ + Backend API Key Error Fixed ✅
 
 ---
 
@@ -78,6 +78,7 @@
 - [x] **FIX**: Add stream=True parameter to enable response streaming
 - [x] **FIX**: Extract content from RunContentEvent objects properly
 - [x] **FIX**: Fix Ollama import error (RequestError instead of ConnectError)
+- [x] **FIX**: Pass API keys explicitly to OpenAI and OpenRouter models
 
 **Status**: ✅ COMPLETE
 - All 9 Shopify tools implemented and registered
@@ -88,27 +89,38 @@
 - **Async tool support fully functional** ✅
 - **Streaming responses working correctly** ✅
 - **All import errors resolved** ✅
+- **API key authentication fixed** ✅
 
 ---
 
 ## Backend Fixes Applied ✅
 
-### Issue: "Async tool shopify can't be used with synchronous agent.run()"
-
+### Issue 1: "Async tool shopify can't be used with synchronous agent.run()"
 **Root Cause**: ShopifyTools methods are async, but ChatState was using synchronous `agent.run()`
 
 **Fixes Applied**:
 1. ✅ Changed `self._agent.run()` to `self._agent.arun()` to support async tools
-2. ✅ Added `stream=True` parameter to enable proper streaming: `agent.arun(..., stream=True)`
+2. ✅ Added `stream=True` parameter to enable proper streaming
 3. ✅ Fixed streaming iteration to handle `RunContentEvent` objects properly
 4. ✅ Fixed Ollama import error: changed `ConnectError` to `RequestError`
 
+### Issue 2: "No cookie auth credentials found" (ModelProviderError)
+**Root Cause**: OpenAI and OpenRouter models were initialized without API keys
+
+**Fixes Applied**:
+1. ✅ Updated `AIOrchestrator.get_best_model()` to pass `api_key` parameter to OpenAIChat
+2. ✅ Updated `AIOrchestrator.get_best_model()` to pass `api_key` parameter to OpenRouter
+3. ✅ API keys now properly retrieved from SettingsState and passed to models
+4. ✅ Ollama model kept as-is (doesn't require API key)
+
 **Testing Results**:
 - ✅ Agent initialization works without errors
+- ✅ OpenAI model properly authenticated with API key
 - ✅ Streaming responses work correctly with async tools
 - ✅ Shopify tools can now be called by the AI agent
-- ✅ Ollama fallback logic works properly
+- ✅ Ollama fallback logic works properly (falls back to OpenAI when unavailable)
 - ✅ Full chat flow tested and verified
+- ✅ 283 streaming chunks processed successfully in test
 
 ---
 
@@ -158,12 +170,13 @@
 5. **Chat Interface** with streaming responses and conversation history
 6. **AI Model Key Testing** with OpenAI and OpenRouter validation
 7. **Async Tool Support** for Shopify API integration ✅
-8. **Backend Error Fixes** for streaming and imports ✅
+8. **Backend Error Fixes** for streaming, imports, and API authentication ✅
 
 ### 🔧 Recent Fixes:
 - **Async Tool Error**: Fixed by changing `agent.run()` to `agent.arun(stream=True)`
 - **Streaming Implementation**: Properly extracting content from `RunContentEvent` objects
 - **Ollama Import Error**: Changed `ConnectError` to `RequestError`
+- **API Key Authentication**: Added explicit `api_key` parameter to OpenAI and OpenRouter model initialization ✅
 
 ### 📊 Technical Details:
 - **Shopify Tools**: 9 async tools using GraphQL Admin API
@@ -171,3 +184,4 @@
 - **Chat Framework**: Agno with async tool calling support
 - **API Integration**: ShopifyAPI v12.7.0 with GraphQL
 - **Streaming**: Real-time response streaming with `arun(stream=True)`
+- **Authentication**: Explicit API key passing to all model providers ✅

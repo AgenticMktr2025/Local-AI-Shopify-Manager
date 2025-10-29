@@ -43,9 +43,12 @@ class AIOrchestrator:
         if await self._is_ollama_available():
             return Ollama(id="gemma2")
         if self.settings.openrouter_api_key:
-            return OpenRouter(id="mistralai/mistral-7b-instruct")
+            return OpenRouter(
+                id="mistralai/mistral-7b-instruct",
+                api_key=self.settings.openrouter_api_key,
+            )
         if self.settings.openai_api_key:
-            return OpenAIChat(id="gpt-3.5-turbo")
+            return OpenAIChat(id="gpt-3.5-turbo", api_key=self.settings.openai_api_key)
         return None
 
 
