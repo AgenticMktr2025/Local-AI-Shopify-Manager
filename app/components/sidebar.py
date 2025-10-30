@@ -56,12 +56,50 @@ def sidebar() -> rx.Component:
     )
 
 
+def mobile_sidebar() -> rx.Component:
+    return rx.el.div(
+        rx.el.div(
+            rx.el.div(
+                rx.el.a(
+                    rx.icon("store", class_name="h-6 w-6 text-blue-600"),
+                    rx.el.span("Shopify AI", class_name="sr-only"),
+                    href="#",
+                    class_name="flex items-center gap-2 font-semibold",
+                ),
+                class_name="flex h-14 items-center border-b px-6 lg:h-[60px]",
+            ),
+            rx.el.div(
+                rx.el.nav(
+                    nav_item(
+                        "message-circle",
+                        "Chat",
+                        "/chat",
+                        rx.State.router.page.path == "/chat",
+                    ),
+                    nav_item(
+                        "home", "Dashboard", "/", rx.State.router.page.path == "/"
+                    ),
+                    nav_item(
+                        "settings",
+                        "Settings",
+                        "/settings",
+                        rx.State.router.page.path == "/settings",
+                    ),
+                    class_name="grid items-start px-4 text-sm font-medium",
+                ),
+                class_name="flex-1 overflow-auto py-2",
+            ),
+        ),
+        class_name="border-r bg-gray-50/40 md:hidden",
+    )
+
+
 def page_layout(main_content: rx.Component) -> rx.Component:
     return rx.el.div(
         sidebar(),
         rx.el.div(
             rx.el.header(
-                rx.el.div(),
+                mobile_sidebar(),
                 class_name="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-gray-100/40 px-6",
             ),
             rx.el.main(main_content, class_name="flex-1 p-4 md:p-6"),

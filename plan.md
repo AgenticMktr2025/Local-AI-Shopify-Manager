@@ -129,6 +129,48 @@
 
 ---
 
+## Phase 4.6: Create Shopify Storefront Tools ✅
+**Goal**: Implement customer-facing Storefront API tools for the AI agent
+
+### Tasks:
+- [x] Create new `ShopifyStorefrontTools` toolkit class
+- [x] Implement `search_products` tool for product catalog queries
+- [x] Implement `get_product_by_handle` tool for detailed product info
+- [x] Add vLLM/vSLM-friendly docstrings with usage examples
+- [x] Use GraphQL queries via httpx with proper authentication
+- [x] Add `[Storefront]` prefix to distinguish from Admin tools
+- [x] Integrate tools into ChatState agent initialization
+- [x] Update system prompt to guide agent on when to use each API
+- [x] Test toolkit initialization and tool signatures
+
+**Status**: ✅ COMPLETE
+
+**Implementation Details**:
+- **File Created**: `app/tools/shopify_storefront_tools.py`
+- **Tools Implemented**:
+  1. **search_products**: Search for products in the online store using keywords
+  2. **get_product_by_handle**: Get public product details by URL handle
+- **Architecture**:
+  - Async methods throughout for non-blocking operations
+  - GraphQL queries to Storefront API endpoint
+  - Authentication via `X-Shopify-Storefront-Access-Token` header
+  - Structured JSON responses with success/error handling
+  - Comprehensive error logging
+- **Agent Integration**:
+  - Tools conditionally loaded when `is_shopify_storefront_token_set` is True
+  - System prompt updated to explain Admin vs Storefront tool usage
+  - Clear guidance: Admin for management, Storefront for customer-facing queries
+  - Tools marked with `[Storefront]` prefix for easy identification
+
+**What This Enables**:
+- AI agent can now query public product catalog (what customers see)
+- Check product availability from customer perspective
+- Search products using customer-friendly terms
+- Get detailed product information by handle (URL-friendly ID)
+- Separate clear distinction between internal management and public-facing operations
+
+---
+
 ## Phase 5: Custom Dashboard with KPI Widgets
 **Goal**: Build visual dashboard with real-time Shopify metrics
 
@@ -167,21 +209,35 @@
   - Credential visibility toggles
   - Independent testing for each API type
 - **Shopify Integration**:
-  - 9 enhanced Admin API tools with vLLM/vSLM-friendly descriptions
-  - Storefront API support infrastructure ready
-  - Product, Customer, and Order management capabilities
-  - GraphQL ID format support
+  - **9 Admin API tools** for management operations (Product/Customer/Order)
+  - **2 Storefront API tools** for customer-facing queries (Product Search/Details)
+  - Dual API architecture with clear separation of concerns
+  - GraphQL-based queries with proper authentication
   - Intelligent error handling and recovery
-- **Chat Interface**:
+- **AI Agent**:
   - Streaming responses with multiple AI models
   - Cloud-only model selection: Mistral → OpenRouter → OpenAI
   - Conversation history with markdown support
   - Processing status indicators
   - Agent-based architecture with Agno framework
-- **API Architecture**:
-  - Dual API support (Admin + Storefront)
-  - Separate credential management and testing
-  - Ready for Storefront-specific tool development
+  - **Intelligent tool routing** between Admin and Storefront APIs
+  - System prompt guidance for appropriate tool selection
+- **Chat Interface**:
+  - Natural language queries to both APIs
+  - Real-time streaming responses
+  - Tool call visibility
+  - Error handling and recovery
+
+### 🎯 Comparison: Admin vs Storefront Tools
+
+| Feature | Admin API Tools (9) | Storefront API Tools (2) |
+|---------|---------------------|--------------------------|
+| **Purpose** | Store management | Customer-facing queries |
+| **Authentication** | Admin Access Token | Storefront Access Token |
+| **Permissions** | Full access (read/write) | Public read-only |
+| **Tool Prefix** | None (default) | `[Storefront]` marker |
+| **Example Uses** | Create products, manage orders | Search products, check availability |
+| **Agent Guidance** | For management tasks | For customer perspective |
 
 ### 🎯 Next Phase: Custom Dashboard with KPI Widgets
 
@@ -210,21 +266,21 @@
 
 ## 📝 Notes
 
-**Phase 1-4.5 Summary:**
+**Phase 1-4.6 Summary:**
 - ✅ Removed all non-functional Ollama code
 - ✅ Simplified to cloud-only models (Mistral primary, OpenRouter secondary, OpenAI fallback)
 - ✅ Enhanced all 9 Shopify Admin API tools with structured, vLLM/vSLM-friendly docstrings
 - ✅ Added comprehensive agent instructions with Shopify-specific context
 - ✅ Integrated Mistral AI as the primary model provider with native API support
 - ✅ **Added full Shopify Storefront API support with separate credentials and testing**
-- System now supports both Admin and Storefront APIs with independent credential management
+- ✅ **Implemented 2 Storefront API tools with intelligent routing**
+- System now supports both Admin and Storefront APIs with intelligent tool selection
+
+**Tool Architecture**:
+- **Total Tools**: 11 (9 Admin + 2 Storefront)
+- **Admin Tools**: Product (3), Customer (3), Order (3)
+- **Storefront Tools**: Product Search & Details (2)
+- **Future Expansion**: Collections, Cart operations, Customer accounts
 
 **Next Steps:**
 Phase 5 will implement a custom dashboard with KPI widgets showing real-time Shopify store metrics, enabling users to monitor their store performance at a glance.
-
-**Storefront API Use Cases** (Future Development):
-- Customer-facing product catalog queries
-- Shopping cart and checkout operations
-- Customer authentication and account management
-- Content delivery (blogs, pages, collections)
-- Real-time inventory checks for customers

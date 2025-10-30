@@ -58,6 +58,7 @@ class ChatState(rx.State):
         """Initializes the agent when the page loads."""
         from app.states.settings_state import SettingsState
         from app.tools.shopify_tools import ShopifyTools
+        from app.tools.shopify_storefront_tools import ShopifyStorefrontTools
 
         settings = await self.get_state(SettingsState)
         orchestrator = AIOrchestrator(settings)
@@ -66,10 +67,14 @@ class ChatState(rx.State):
         tools = [DuckDuckGoTools()]
         if settings.are_shopify_credentials_set:
             tools.append(ShopifyTools())
+        if settings.is_shopify_storefront_token_set:
+            tools.append(ShopifyStorefrontTools())
         system_prompt = """
         You are a Shopify AI Assistant. Your goal is to help users manage their Shopify store by using the provided tools. 
 
-        - Prioritize using the Shopify tools to answer questions about products, customers, and orders.
+        - You have two sets of Shopify tools: Admin tools (default) and Storefront tools (prefixed with `[Storefront]` in the description).
+        - Use Admin tools for management tasks like creating products, updating orders, or viewing internal data.
+        - Use Storefront tools for public-facing queries, like checking what a customer sees in the online store.
         - For general knowledge questions, use the DuckDuckGo search tool.
         - When a user asks to perform an action (e.g., 'create a product'), use the corresponding tool and confirm the successful completion of the action.
         - If a tool fails, inform the user about the error and ask for clarification if needed.
