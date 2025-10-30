@@ -8,6 +8,7 @@ from agno.tools.duckduckgo import DuckDuckGoTools
 from agno.models.openai import OpenAIChat
 from agno.models.openrouter import OpenRouter
 from agno.models.mistral import MistralChat
+from agno.exceptions import ModelProviderError
 
 
 class AIOrchestrator:
@@ -19,15 +20,7 @@ class AIOrchestrator:
         self.current_model_name: str = ""
 
     async def get_best_model(self) -> MistralChat | OpenAIChat | OpenRouter | None:
-        """Selects the best available model based on priority: OpenRouter -> Mistral -> OpenAI."""
-        if self.settings.openrouter_api_key:
-            self.current_model_name = "OpenRouter (LongCat-Flash-Chat)"
-            logging.info(f"Using model: {self.current_model_name}")
-            return OpenRouter(
-                id="meituan/longcat-flash-chat:free",
-                api_key=self.settings.openrouter_api_key,
-                base_url="https://openrouter.ai/api/v1",
-            )
+        """Selects the best available model based on priority: Mistral -> OpenAI -> OpenRouter."""
         if self.settings.mistral_api_key:
             self.current_model_name = "Mistral (mistral-large-latest)"
             logging.info(f"Using model: {self.current_model_name}")
@@ -38,6 +31,14 @@ class AIOrchestrator:
             self.current_model_name = "OpenAI (GPT-3.5 Turbo)"
             logging.info(f"Using model: {self.current_model_name}")
             return OpenAIChat(id="gpt-3.5-turbo", api_key=self.settings.openai_api_key)
+        if self.settings.openrouter_api_key:
+            self.current_model_name = "OpenRouter (Mistral 7B Instruct)"
+            logging.info(f"Using model: {self.current_model_name}")
+            return OpenRouter(
+                id="mistralai/mistral-7b-instruct:free",
+                api_key=self.settings.openrouter_api_key,
+                base_url="https://openrouter.ai/api/v1",
+            )
         self.current_model_name = "No model available"
         logging.warning(
             "No AI models are available. Please configure API keys in settings."
@@ -122,10 +123,19 @@ class ChatState(rx.State):
                         full_response += chunk
                         self.messages[-1]["content"] = full_response
                         yield
+        except ModelProviderError as e:
+            logging.exception(f"Model provider error during agent execution: {e}")
+            await self.on_load()
+            self.messages.append(
+                {
+                    "role": "assistant",
+                    "content": f"The current AI model failed. Trying a different model. Please ask your question again.",
+                }
+            )
         except Exception as e:
             logging.exception(f"Error during agent execution: {e}")
             self.messages.append(
-                {"role": "assistant", "content": f"An error occurred: {e}"}
+                {"role": "assistant", "content": f"An unexpected error occurred: {e}"}
             )
         finally:
             self.is_processing = False
