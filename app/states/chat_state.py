@@ -6,36 +6,20 @@ from typing import AsyncGenerator, cast
 from agno.agent import Agent, Message
 from agno.tools.duckduckgo import DuckDuckGoTools
 from agno.models.openai import OpenAIChat
-from agno.models.ollama import Ollama
 from agno.models.openrouter import OpenRouter
 
 
 class AIOrchestrator:
-    """Manages AI model selection and fallback logic."""
+    """Manages AI model selection and fallback logic for cloud-based models."""
 
     def __init__(self, settings_state: "rx.State"):
         self.settings = settings_state
-        self.client_cache: dict[str, OpenAIChat | Ollama | OpenRouter] = {}
+        self.client_cache: dict[str, OpenAIChat | OpenRouter] = {}
         self.current_model_name: str = ""
 
-    async def _is_ollama_available(self) -> bool:
-        """Check if the Ollama server is running and has models. Fails silently."""
-        try:
-            import ollama
-
-            response = await asyncio.wait_for(asyncio.to_thread(ollama.list), timeout=2)
-            return bool(response.get("models"))
-        except Exception as e:
-            logging.exception(f"Ollama check failed: {e}")
-            return False
-
-    async def get_best_model(self) -> OpenAIChat | Ollama | OpenRouter | None:
-        """Selects the best available model based on priority and availability."""
-        if await self._is_ollama_available():
-            self.current_model_name = "Native AI (phi3:mini)"
-            logging.info(f"Using model: {self.current_model_name}")
-            return Ollama(id="phi3:mini")
-        if self.settings.openrouter_api_key:
+    async def get_best_model(self) -> OpenAIChat | OpenRouter | None:
+        """Selects the best available model based on priority: OpenRouter -> OpenAI."""
+        if self.settings.is_openrouter_key_set:
             self.current_model_name = "OpenRouter (Mistral)"
             logging.info(f"Using model: {self.current_model_name}")
             return OpenRouter(
@@ -43,7 +27,7 @@ class AIOrchestrator:
                 api_key=self.settings.openrouter_api_key,
                 base_url="https://openrouter.ai/api/v1",
             )
-        if self.settings.openai_api_key:
+        if self.settings.is_openai_key_set:
             self.current_model_name = "OpenAI (GPT-3.5 Turbo)"
             logging.info(f"Using model: {self.current_model_name}")
             return OpenAIChat(id="gpt-3.5-turbo", api_key=self.settings.openai_api_key)
