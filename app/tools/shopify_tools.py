@@ -843,7 +843,7 @@ class ShopifyTools(Toolkit):
         """
         [Order Management] - Retrieve orders with optional filtering.
 
-        Description: Fetches a list of orders, optionally filtering by status.
+        Description: Fetches a list of orders, optionally filtering by status. Orders are sorted by creation date, with the most recent first.
 
         Required Permissions: read_orders
 
@@ -868,7 +868,7 @@ class ShopifyTools(Toolkit):
                 }
             )
         query_filter = f"status:{status}" if status else ""
-        graphql_query = f'\n        {{\n          orders(first: {limit}, query: "{query_filter}") {{\n            edges {{\n              node {{\n                id\n                name\n                displayFinancialStatus\n                displayFulfillmentStatus\n                customer {{ firstName lastName }}\n              }}\n            }}\n          }}\n        }}\n        '
+        graphql_query = f'\n        {{\n          orders(first: {limit}, query: "{query_filter}", sortKey: PROCESSED_AT, reverse: true) {{\n            edges {{\n              node {{\n                id\n                name\n                processedAt\n                displayFinancialStatus\n                displayFulfillmentStatus\n                totalPriceSet {{ shopMoney {{ amount currencyCode }} }}\n                customer {{ firstName lastName }}\n              }}\n            }}\n          }}\n        }}\n        '
         return self._execute_query("get_orders", graphql_query)
 
     async def get_order_by_id(self, order_id: str) -> str:
@@ -897,7 +897,7 @@ class ShopifyTools(Toolkit):
                     "tool": "get_order_by_id",
                 }
             )
-        graphql_query = f'\n        {{\n          order(id: "{order_id}") {{\n            id\n            name\n            fullyPaid\n            lineItems(first: 10) {{\n              edges {{\n                node {{ name quantity }}\n              }}\n            }}\n          }}\n        }}\n        '
+        graphql_query = f'\n        {{\n          order(id: "{order_id}") {{\n            id\n            name\n            processedAt\n            fullyPaid\n            totalPriceSet {{ shopMoney {{ amount currencyCode }} }}\n            lineItems(first: 10) {{\n              edges {{\n                node {{ name quantity }}\n              }}\n            }}\n            customer {{ firstName lastName }}\n          }}\n        }}\n        '
         return self._execute_query("get_order_by_id", graphql_query)
 
     async def update_order(self, order_id: str, **kwargs) -> str:
