@@ -212,14 +212,17 @@ class ChatState(rx.State):
         except ModelProviderError as e:
             logging.exception(f"Model provider error during agent execution: {e}")
             if assistant_message_initialized:
-                self.messages.pop()
+                self.messages[-1]["content"] = (
+                    f"The current AI model failed. Trying a different model. Please ask your question again."
+                )
+            else:
+                self.messages.append(
+                    {
+                        "role": "assistant",
+                        "content": f"The current AI model failed. Trying a different model. Please ask your question again.",
+                    }
+                )
             await self._initialize_agent(question)
-            self.messages.append(
-                {
-                    "role": "assistant",
-                    "content": f"The current AI model failed. Trying a different model. Please ask your question again.",
-                }
-            )
         except Exception as e:
             logging.exception(f"Error during agent execution: {e}")
             if assistant_message_initialized:
