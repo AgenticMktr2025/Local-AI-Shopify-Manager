@@ -20,19 +20,35 @@ class AIOrchestrator:
         self.current_model_name: str = ""
 
     async def get_best_model(self) -> MistralChat | OpenAIChat | OpenRouter | None:
-        """Selects the best available model based on priority: OpenRouter -> Mistral -> OpenAI."""
+        """Selects the best available model based on priority: OpenRouter (LongCat-Flash-Chat -> DeepSeek V3.1) -> Mistral -> OpenAI."""
         if self.settings.openrouter_api_key:
-            self.current_model_name = "OpenRouter (DeepSeek V3.1)"
-            logging.info(f"Using model: {self.current_model_name}")
-            return OpenRouter(
-                id="deepseek/deepseek-chat-v3.1:free",
-                api_key=self.settings.openrouter_api_key,
-                base_url="https://openrouter.ai/api/v1",
-                default_headers={
-                    "HTTP-Referer": "http://localhost:3000",
-                    "X-Title": "Shopify AI Manager",
-                },
-            )
+            try:
+                self.current_model_name = "OpenRouter (LongCat-Flash-Chat)"
+                logging.info(f"Using model: {self.current_model_name}")
+                return OpenRouter(
+                    id="meituan/longcat-flash-chat:free",
+                    api_key=self.settings.openrouter_api_key,
+                    base_url="https://openrouter.ai/api/v1",
+                    default_headers={
+                        "HTTP-Referer": "http://localhost:3000",
+                        "X-Title": "Shopify AI Manager",
+                    },
+                )
+            except Exception as e:
+                logging.exception(
+                    f"Failed to initialize LongCat-Flash-Chat, falling back. Error: {e}"
+                )
+                self.current_model_name = "OpenRouter (DeepSeek V3.1)"
+                logging.info(f"Using model: {self.current_model_name}")
+                return OpenRouter(
+                    id="deepseek/deepseek-chat-v3.1:free",
+                    api_key=self.settings.openrouter_api_key,
+                    base_url="https://openrouter.ai/api/v1",
+                    default_headers={
+                        "HTTP-Referer": "http://localhost:3000",
+                        "X-Title": "Shopify AI Manager",
+                    },
+                )
         if self.settings.mistral_api_key:
             self.current_model_name = "Mistral (mistral-large-latest)"
             logging.info(f"Using model: {self.current_model_name}")
