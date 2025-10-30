@@ -29,8 +29,8 @@ class AIOrchestrator:
         )
         if self.settings.openrouter_api_key:
             try:
-                model_id = "mistralai/mistral-8b-instruct"
-                self.current_model_name = "OpenRouter (Mistral 8B Instruct)"
+                model_id = "mistralai/mixtral-8x7b-instruct-v0.1"
+                self.current_model_name = "OpenRouter (Mixtral 8x7B Instruct)"
                 if is_research_query:
                     model_id = "alibaba/tongyi-deepresearch-30b-a3b:free"
                     self.current_model_name = "OpenRouter (Tongyi DeepResearch)"
