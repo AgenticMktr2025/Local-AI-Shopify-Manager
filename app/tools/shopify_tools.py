@@ -66,6 +66,45 @@ class ShopifyTools(Toolkit):
             self.update_basic_discount_code,
             self.delete_discount_code,
             self.create_gift_card,
+            self.get_draft_orders,
+            self.get_draft_order_by_id,
+            self.create_draft_order,
+            self.update_draft_order,
+            self.complete_draft_order,
+            self.send_draft_order_invoice,
+            self.delete_draft_order,
+            self.get_locations,
+            self.get_location_by_id,
+            self.activate_location,
+            self.deactivate_location,
+            self.get_returns,
+            self.get_return_by_id,
+            self.create_return,
+            self.approve_return,
+            self.decline_return,
+            self.close_return,
+            self.create_staged_upload,
+            self.get_files,
+            self.file_create,
+            self.delete_files,
+            self.get_reports,
+            self.get_report_by_id,
+            self.get_blogs,
+            self.get_articles,
+            self.get_article_by_id,
+            self.create_article,
+            self.update_article,
+            self.delete_article,
+            self.get_pages,
+            self.get_page_by_id,
+            self.create_page,
+            self.update_page,
+            self.delete_page,
+            self.get_marketing_events,
+            self.get_marketing_event_by_id,
+            self.create_marketing_event,
+            self.update_marketing_event,
+            self.delete_marketing_event,
         ]
         super().__init__(name="shopify", tools=tools, **kwargs)
 
@@ -1655,4 +1694,1849 @@ class ShopifyTools(Toolkit):
         """
         return self._execute_query(
             "giftCardCreate", graphql_mutation, variables={"input": input_vars}
+        )
+
+    async def get_draft_orders(
+        self, status: Optional[str] = None, limit: int = 10
+    ) -> str:
+        """
+        [Draft Orders] - Retrieve a list of draft orders.
+
+        Description: Fetches draft orders, optionally filtering by status.
+
+        Required Permissions: read_draft_orders
+
+        Example Usage:
+        - "Show me the last 5 open draft orders." -> get_draft_orders(status="OPEN", limit=5)
+
+        Args:
+            status (Optional[str]): Filter by status (OPEN, COMPLETED, INVOICE_SENT).
+            limit (int): The maximum number of draft orders to return.
+
+        Returns:
+            JSON string with a list of draft orders.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "get_draft_orders",
+                }
+            )
+        query_filter = f"status:{status}" if status else ""
+        graphql_query = f'\n        {{\n          draftOrders(first: {limit}, query: "{query_filter}") {{\n            edges {{\n              node {{\n                id\n                name\n                status\n                totalPrice\n                customer {{\n                  id\n                  displayName\n                }}\n              }}\n            }}\n          }}\n        }}\n        '
+        return self._execute_query("get_draft_orders", graphql_query)
+
+    async def get_draft_order_by_id(self, draft_order_id: str) -> str:
+        """
+        [Draft Orders] - Get a specific draft order by its GraphQL ID.
+
+        Description: Retrieves detailed information for a single draft order using its GID.
+
+        Required Permissions: read_draft_orders
+
+        Example Usage:
+        - "Get details for draft order 'gid://shopify/DraftOrder/12345'." -> get_draft_order_by_id(draft_order_id="gid://shopify/DraftOrder/12345")
+
+        Args:
+            draft_order_id (str): The full GraphQL ID of the draft order.
+
+        Returns:
+            JSON string with the draft order's details.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "get_draft_order_by_id",
+                }
+            )
+        graphql_query = f'\n        {{\n          draftOrder(id: "{draft_order_id}") {{\n            id\n            name\n            status\n            note\n            totalPrice\n            lineItems(first: 10) {{\n                edges {{\n                    node {{\n                        id\n                        title\n                        quantity\n                        originalUnitPrice\n                    }}\n                }}\n            }}\n          }}\n        }}\n        '
+        return self._execute_query("get_draft_order_by_id", graphql_query)
+
+    async def create_draft_order(
+        self,
+        line_items: list[dict],
+        customer_id: Optional[str] = None,
+        note: Optional[str] = None,
+    ) -> str:
+        """
+        [Draft Orders] - Create a new draft order.
+
+        Description: Creates a draft order, which can be used to invoice customers or create orders in the admin.
+
+        Required Permissions: write_draft_orders
+
+        Example Usage:
+        - "Create a draft order for customer 'gid://.../Customer/123' with one 't-shirt' variant 'gid://.../Variant/456'." -> create_draft_order(line_items=[{{"variantId": "gid://.../Variant/456", "quantity": 1}}], customer_id="gid://.../Customer/123")
+
+        Args:
+            line_items (list[dict]): A list of line items, each a dict with 'variantId' and 'quantity'.
+            customer_id (Optional[str]): The GraphQL ID of the customer.
+            note (Optional[str]): A note for the draft order.
+
+        Returns:
+            JSON string with the created draft order's data.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "create_draft_order",
+                }
+            )
+        input_vars = {"lineItems": line_items}
+        if customer_id:
+            input_vars["customerId"] = customer_id
+        if note:
+            input_vars["note"] = note
+        graphql_mutation = """
+        mutation draftOrderCreate($input: DraftOrderInput!) {
+          draftOrderCreate(input: $input) {
+            draftOrder {
+              id
+              name
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        return self._execute_query(
+            "draftOrderCreate", graphql_mutation, variables={"input": input_vars}
+        )
+
+    async def update_draft_order(self, draft_order_id: str, **kwargs) -> str:
+        """
+        [Draft Orders] - Update an existing draft order.
+
+        Description: Modifies a draft order before it is completed, e.g., adding line items or updating customer info.
+
+        Required Permissions: write_draft_orders
+
+        Example Usage:
+        - "Add a note 'Customer wants gift wrap' to draft order 'gid://.../DraftOrder/123'." -> update_draft_order(draft_order_id="gid://.../123", note="Customer wants gift wrap")
+
+        Args:
+            draft_order_id (str): The GraphQL ID of the draft order.
+            **kwargs: Fields to update (e.g., note, customerId, lineItems, shippingAddress).
+
+        Returns:
+            JSON string with the updated draft order data.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "update_draft_order",
+                }
+            )
+        input_vars = {key: value for key, value in kwargs.items() if value is not None}
+        graphql_mutation = """
+        mutation draftOrderUpdate($id: ID!, $input: DraftOrderInput!) {
+          draftOrderUpdate(id: $id, input: $input) {
+            draftOrder {
+              id
+              name
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        return self._execute_query(
+            "draftOrderUpdate",
+            graphql_mutation,
+            variables={"id": draft_order_id, "input": input_vars},
+        )
+
+    async def complete_draft_order(
+        self, draft_order_id: str, payment_pending: bool = False
+    ) -> str:
+        """
+        [Draft Orders] - Complete a draft order, converting it into a real order.
+
+        Description: Finalizes a draft order. If payment is not captured, it creates an order with a pending payment.
+
+        Required Permissions: write_draft_orders, write_orders
+
+        Example Usage:
+        - "Complete draft order 'gid://.../DraftOrder/123'." -> complete_draft_order(draft_order_id="gid://.../123")
+
+        Args:
+            draft_order_id (str): The GraphQL ID of the draft order.
+            payment_pending (bool): Set to true if payment will be collected later.
+
+        Returns:
+            JSON string with the newly created order's ID.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "complete_draft_order",
+                }
+            )
+        graphql_mutation = """
+        mutation draftOrderComplete($id: ID!, $paymentPending: Boolean) {
+          draftOrderComplete(id: $id, paymentPending: $paymentPending) {
+            draftOrder {
+              order {
+                id
+                name
+              }
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        variables = {"id": draft_order_id, "paymentPending": payment_pending}
+        return self._execute_query(
+            "draftOrderComplete", graphql_mutation, variables=variables
+        )
+
+    async def send_draft_order_invoice(self, draft_order_id: str) -> str:
+        """
+        [Draft Orders] - Send an invoice to the customer for a draft order.
+
+        Description: Emails an invoice to the customer associated with the draft order, allowing them to complete payment.
+
+        Required Permissions: write_draft_orders
+
+        Example Usage:
+        - "Send an invoice for draft order 'gid://.../DraftOrder/123'." -> send_draft_order_invoice(draft_order_id="gid://.../123")
+
+        Args:
+            draft_order_id (str): The GraphQL ID of the draft order.
+
+        Returns:
+            JSON string confirming the invoice was sent.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "send_draft_order_invoice",
+                }
+            )
+        graphql_mutation = """
+        mutation draftOrderInvoiceSend($id: ID!) {
+          draftOrderInvoiceSend(id: $id) {
+            draftOrder {
+              id
+              status
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        return self._execute_query(
+            "draftOrderInvoiceSend", graphql_mutation, variables={"id": draft_order_id}
+        )
+
+    async def delete_draft_order(self, draft_order_id: str) -> str:
+        """
+        [Draft Orders] - Delete a draft order.
+
+        Description: Permanently deletes a draft order. This action cannot be undone.
+
+        Required Permissions: write_draft_orders
+
+        Example Usage:
+        - "Delete draft order 'gid://.../DraftOrder/123'." -> delete_draft_order(draft_order_id="gid://.../123")
+
+        Args:
+            draft_order_id (str): The GraphQL ID of the draft order to delete.
+
+        Returns:
+            JSON string with the ID of the deleted draft order.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "delete_draft_order",
+                }
+            )
+        graphql_mutation = """
+        mutation draftOrderDelete($id: ID!) {
+          draftOrderDelete(id: $id) {
+            deletedId
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        return self._execute_query(
+            "draftOrderDelete", graphql_mutation, variables={"id": draft_order_id}
+        )
+
+    async def get_reports(self, limit: int = 10) -> str:
+        """
+        [Reports] - Retrieve a list of reports.
+
+        Description: Fetches a list of available reports that can be generated for the store.
+
+        Required Permissions: read_reports
+
+        Example Usage:
+        - "Show me all available reports." -> get_reports()
+
+        Args:
+            limit (int): The maximum number of reports to return.
+
+        Returns:
+            JSON string with a list of reports.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "get_reports",
+                }
+            )
+        graphql_query = f"\n        {{\n          reports(first: {limit}) {{\n            edges {{\n              node {{\n                id\n                name\n                shopifyQL\n              }}\n            }}\n          }}\n        }}\n        "
+        return self._execute_query("get_reports", graphql_query)
+
+    async def get_report_by_id(self, report_id: str) -> str:
+        """
+        [Reports] - Get a specific report by its GraphQL ID.
+
+        Description: Retrieves detailed information for a single report using its GID.
+
+        Required Permissions: read_reports
+
+        Example Usage:
+        - "Get details for report 'gid://shopify/Report/12345'." -> get_report_by_id(report_id="gid://shopify/Report/12345")
+
+        Args:
+            report_id (str): The full GraphQL ID of the report.
+
+        Returns:
+            JSON string with the report's details, including its ShopifyQL query.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "get_report_by_id",
+                }
+            )
+        graphql_query = f'\n        {{\n          report(id: "{report_id}") {{\n            id\n            name\n            shopifyQL\n            updatedAt\n          }}\n        }}\n        '
+        return self._execute_query("get_report_by_id", graphql_query)
+
+    async def get_blogs(self, limit: int = 10) -> str:
+        """
+        [Content] - Retrieve a list of blogs.
+
+        Description: Fetches a list of all blogs in the store.
+
+        Required Permissions: read_content
+
+        Example Usage:
+        - "Show me all the blogs in the store." -> get_blogs()
+
+        Args:
+            limit (int): The maximum number of blogs to return.
+
+        Returns:
+            JSON string with a list of blogs including their ID, title, and handle.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "get_blogs",
+                }
+            )
+        graphql_query = f"\n        {{\n          blogs(first: {limit}) {{\n            edges {{\n              node {{\n                id\n                title\n                handle\n              }}\n            }}\n          }}\n        }}\n        "
+        return self._execute_query("get_blogs", graphql_query)
+
+    async def get_articles(self, blog_id: str, limit: int = 10) -> str:
+        """
+        [Content] - Retrieve a list of articles from a specific blog.
+
+        Description: Fetches articles from a given blog, useful for managing content.
+
+        Required Permissions: read_content
+
+        Example Usage:
+        - "Get the last 5 articles from blog 'gid://shopify/Blog/123'." -> get_articles(blog_id="gid://shopify/Blog/123", limit=5)
+
+        Args:
+            blog_id (str): The GraphQL ID of the blog to fetch articles from.
+            limit (int): The maximum number of articles to return.
+
+        Returns:
+            JSON string with a list of articles including their ID, title, and author.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "get_articles",
+                }
+            )
+        graphql_query = f'\n        {{\n          blog(id: "{blog_id}") {{\n            articles(first: {limit}) {{\n              edges {{\n                node {{\n                  id\n                  title\n                  handle\n                  authorV2 {{\n                    name\n                  }}\n                }}\n              }}\n            }}\n          }}\n        }}\n        '
+        return self._execute_query("get_articles", graphql_query)
+
+    async def get_article_by_id(self, article_id: str) -> str:
+        """
+        [Content] - Get a specific article by its GraphQL ID.
+
+        Description: Retrieves detailed information for a single article.
+
+        Required Permissions: read_content
+
+        Example Usage:
+        - "Show me the content of article 'gid://shopify/Article/123'." -> get_article_by_id(article_id="gid://shopify/Article/123")
+
+        Args:
+            article_id (str): The GraphQL ID of the article.
+
+        Returns:
+            JSON string with article details including title, content, and publication date.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "get_article_by_id",
+                }
+            )
+        graphql_query = f'\n        {{\n          article(id: "{article_id}") {{\n            id\n            title\n            contentHtml\n            publishedAt\n          }}\n        }}\n        '
+        return self._execute_query("get_article_by_id", graphql_query)
+
+    async def create_article(
+        self, blog_id: str, title: str, content_html: str, author_name: str
+    ) -> str:
+        """
+        [Content] - Create a new article in a blog.
+
+        Description: Publishes a new article to a specified blog.
+
+        Required Permissions: write_content
+
+        Example Usage:
+        - "Create an article titled 'My New Post' in blog 'gid://.../Blog/123' written by 'John Doe'." -> create_article(blog_id="gid://...", title="My New Post", content_html="<p>...</p>", author_name="John Doe")
+
+        Args:
+            blog_id (str): The GraphQL ID of the blog.
+            title (str): The title of the article.
+            content_html (str): The article content in HTML format.
+            author_name (str): The name of the author.
+
+        Returns:
+            JSON string with the created article's ID or an error message.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "create_article",
+                }
+            )
+        input_vars = {
+            "blogId": blog_id,
+            "title": title,
+            "contentHtml": content_html,
+            "author": {"name": author_name},
+        }
+        graphql_mutation = """
+        mutation blogCreateArticle($blogId: ID!, $input: ArticleInput!) {
+          blogCreateArticle(blogId: $blogId, article: $input) {
+            article {
+              id
+              title
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        return self._execute_query(
+            "blogCreateArticle",
+            graphql_mutation,
+            variables={"blogId": blog_id, "input": input_vars},
+        )
+
+    async def update_article(self, article_id: str, **kwargs) -> str:
+        """
+        [Content] - Update an existing article.
+
+        Description: Modifies the content, title, or other properties of an article.
+
+        Required Permissions: write_content
+
+        Example Usage:
+        - "Update the title of article 'gid://.../Article/123' to 'Updated Title'." -> update_article(article_id="gid://...", title="Updated Title")
+
+        Args:
+            article_id (str): The GraphQL ID of the article to update.
+            **kwargs: Fields to update (e.g., title, contentHtml, tags).
+
+        Returns:
+            JSON string with the updated article data or an error message.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "update_article",
+                }
+            )
+        input_vars = {key: value for key, value in kwargs.items() if value is not None}
+        graphql_mutation = """
+        mutation articleUpdate($id: ID!, $input: ArticleInput!) {
+          articleUpdate(id: $id, article: $input) {
+            article {
+              id
+              title
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        return self._execute_query(
+            "articleUpdate",
+            graphql_mutation,
+            variables={"id": article_id, "input": input_vars},
+        )
+
+    async def delete_article(self, article_id: str) -> str:
+        """
+        [Content] - Delete an article.
+
+        Description: Permanently removes an article from a blog.
+
+        Required Permissions: write_content
+
+        Example Usage:
+        - "Delete article 'gid://.../Article/123'." -> delete_article(article_id="gid://.../Article/123")
+
+        Args:
+            article_id (str): The GraphQL ID of the article to delete.
+
+        Returns:
+            JSON string with the ID of the deleted article or an error message.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "delete_article",
+                }
+            )
+        graphql_mutation = """
+        mutation articleDelete($id: ID!) {
+          articleDelete(id: $id) {
+            deletedArticleId
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        return self._execute_query(
+            "articleDelete", graphql_mutation, variables={"id": article_id}
+        )
+
+    async def get_pages(self, limit: int = 10) -> str:
+        """
+        [Content] - Retrieve a list of online store pages.
+
+        Description: Fetches a list of static pages like 'About Us' or 'Contact'.
+
+        Required Permissions: read_online_store_pages
+
+        Example Usage:
+        - "Show me all the pages on the online store." -> get_pages()
+
+        Args:
+            limit (int): The maximum number of pages to return.
+
+        Returns:
+            JSON string with a list of pages including their ID, title, and handle.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "get_pages",
+                }
+            )
+        graphql_query = f"\n        {{\n          pages(first: {limit}) {{\n            edges {{\n              node {{\n                id\n                title\n                handle\n              }}\n            }}\n          }}\n        }}\n        "
+        return self._execute_query("get_pages", graphql_query)
+
+    async def get_page_by_id(self, page_id: str) -> str:
+        """
+        [Content] - Get a specific page by its GraphQL ID.
+
+        Description: Retrieves detailed information for a single online store page.
+
+        Required Permissions: read_online_store_pages
+
+        Example Usage:
+        - "Get the content of page 'gid://shopify/Page/123'." -> get_page_by_id(page_id="gid://shopify/Page/123")
+
+        Args:
+            page_id (str): The GraphQL ID of the page.
+
+        Returns:
+            JSON string with page details including title and body content.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "get_page_by_id",
+                }
+            )
+        graphql_query = f'\n        {{\n          page(id: "{page_id}") {{\n            id\n            title\n            body\n            bodySummary\n          }}\n        }}\n        '
+        return self._execute_query("get_page_by_id", graphql_query)
+
+    async def create_page(self, title: str, body_html: str) -> str:
+        """
+        [Content] - Create a new online store page.
+
+        Description: Creates a new static page for the online store.
+
+        Required Permissions: write_online_store_pages
+
+        Example Usage:
+        - "Create a new page called 'About Us' with some content." -> create_page(title="About Us", body_html="<p>About our company...</p>")
+
+        Args:
+            title (str): The title of the page.
+            body_html (str): The page content in HTML format.
+
+        Returns:
+            JSON string with the created page's ID or an error message.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "create_page",
+                }
+            )
+        input_vars = {"title": title, "bodyHtml": body_html}
+        graphql_mutation = """
+        mutation pageCreate($input: PageInput!) {
+          pageCreate(input: $input) {
+            page {
+              id
+              title
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        return self._execute_query(
+            "pageCreate", graphql_mutation, variables={"input": input_vars}
+        )
+
+    async def update_page(self, page_id: str, **kwargs) -> str:
+        """
+        [Content] - Update an existing online store page.
+
+        Description: Modifies the content or title of a page.
+
+        Required Permissions: write_online_store_pages
+
+        Example Usage:
+        - "Update the body of page 'gid://.../Page/123' to 'New content'." -> update_page(page_id="gid://...", bodyHtml="<p>New content</p>")
+
+        Args:
+            page_id (str): The GraphQL ID of the page to update.
+            **kwargs: Fields to update (e.g., title, bodyHtml).
+
+        Returns:
+            JSON string with the updated page data or an error message.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "update_page",
+                }
+            )
+        input_vars = {"id": page_id}
+        valid_args = ["title", "bodyHtml"]
+        for key, value in kwargs.items():
+            if key in valid_args and value is not None:
+                input_vars[key] = value
+        graphql_mutation = """
+        mutation pageUpdate($input: PageInput!) {
+          pageUpdate(input: $input) {
+            page {
+              id
+              title
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        return self._execute_query(
+            "pageUpdate", graphql_mutation, variables={"input": input_vars}
+        )
+
+    async def delete_page(self, page_id: str) -> str:
+        """
+        [Content] - Delete an online store page.
+
+        Description: Permanently removes a static page from the online store.
+
+        Required Permissions: write_online_store_pages
+
+        Example Usage:
+        - "Delete the page with ID 'gid://.../Page/123'." -> delete_page(page_id="gid://.../Page/123")
+
+        Args:
+            page_id (str): The GraphQL ID of the page to delete.
+
+        Returns:
+            JSON string with the ID of the deleted page or an error message.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "delete_page",
+                }
+            )
+        graphql_mutation = """
+        mutation pageDelete($input: PageDeleteInput!) {
+          pageDelete(input: $input) {
+            deletedPageId
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        return self._execute_query(
+            "pageDelete", graphql_mutation, variables={"input": {"id": page_id}}
+        )
+
+    async def get_marketing_events(self, limit: int = 10) -> str:
+        """
+        [Marketing] - Retrieve a list of marketing events.
+
+        Description: Fetches a list of marketing events, which represent activities like ad campaigns or social media posts.
+
+        Required Permissions: read_marketing_events
+
+        Example Usage:
+        - "Show me the last 5 marketing events." -> get_marketing_events(limit=5)
+
+        Args:
+            limit (int): The maximum number of events to return.
+
+        Returns:
+            JSON string with a list of marketing events.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "get_marketing_events",
+                }
+            )
+        graphql_query = f"\n        {{\n          marketingEvents(first: {limit}) {{\n            edges {{\n              node {{\n                id\n                appTitle\n                description\n                type\n                startedAt\n                endedAt\n              }}\n            }}\n          }}\n        }}\n        "
+        return self._execute_query("get_marketing_events", graphql_query)
+
+    async def get_marketing_event_by_id(self, event_id: str) -> str:
+        """
+        [Marketing] - Get a specific marketing event by its GraphQL ID.
+
+        Description: Retrieves detailed information for a single marketing event using its GID.
+
+        Required Permissions: read_marketing_events
+
+        Example Usage:
+        - "Get details for marketing event 'gid://shopify/MarketingEvent/123'." -> get_marketing_event_by_id(event_id="gid://shopify/MarketingEvent/123")
+
+        Args:
+            event_id (str): The full GraphQL ID of the marketing event.
+
+        Returns:
+            JSON string with the marketing event's details.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "get_marketing_event_by_id",
+                }
+            )
+        graphql_query = f'\n        {{\n          marketingEvent(id: "{event_id}") {{\n            id\n            appTitle\n            description\n            type\n            startedAt\n            endedAt\n            utmCampaign\n          }}\n        }}\n        '
+        return self._execute_query("get_marketing_event_by_id", graphql_query)
+
+    async def create_marketing_event(self, event_input: dict) -> str:
+        """
+        [Marketing] - Create a new marketing event.
+
+        Description: Logs a new marketing event to track campaign activities. The input must be a dictionary matching Shopify's MarketingEventInput schema.
+
+        Required Permissions: write_marketing_events
+
+        Example Usage:
+        - "Create a marketing event for our 'Summer Sale' campaign." -> create_marketing_event(event_input={{"type": "AD", "startedAt": "2024-07-01T00:00:00Z", "utmCampaign": "summer_sale_24"}})
+
+        Args:
+            event_input (dict): A dictionary representing the MarketingEventInput object.
+
+        Returns:
+            JSON string with the created marketing event's ID.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "create_marketing_event",
+                }
+            )
+        graphql_mutation = """
+        mutation marketingEventCreate($marketingEvent: MarketingEventInput!) {
+          marketingEventCreate(marketingEvent: $marketingEvent) {
+            marketingEvent {
+              id
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        return self._execute_query(
+            "marketingEventCreate",
+            graphql_mutation,
+            variables={"marketingEvent": event_input},
+        )
+
+    async def update_marketing_event(self, event_id: str, event_input: dict) -> str:
+        """
+        [Marketing] - Update an existing marketing event.
+
+        Description: Modifies an existing marketing event. The input must be a dictionary matching Shopify's MarketingEventInput schema.
+
+        Required Permissions: write_marketing_events
+
+        Example Usage:
+        - "Update the end date for marketing event 'gid://.../123'." -> update_marketing_event(event_id="gid://.../123", event_input={{"endedAt": "2024-07-31T23:59:59Z"}})
+
+        Args:
+            event_id (str): The GraphQL ID of the marketing event to update.
+            event_input (dict): A dictionary representing the MarketingEventInput object with fields to update.
+
+        Returns:
+            JSON string with the updated marketing event's ID.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "update_marketing_event",
+                }
+            )
+        graphql_mutation = """
+        mutation marketingEventUpdate($id: ID!, $marketingEvent: MarketingEventInput!) {
+          marketingEventUpdate(id: $id, marketingEvent: $marketingEvent) {
+            marketingEvent {
+              id
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        variables = {"id": event_id, "marketingEvent": event_input}
+        return self._execute_query(
+            "marketingEventUpdate", graphql_mutation, variables=variables
+        )
+
+    async def delete_marketing_event(self, event_id: str) -> str:
+        """
+        [Marketing] - Delete a marketing event.
+
+        Description: Permanently removes a marketing event.
+
+        Required Permissions: write_marketing_events
+
+        Example Usage:
+        - "Delete the marketing event 'gid://.../MarketingEvent/456'." -> delete_marketing_event(event_id="gid://.../456")
+
+        Args:
+            event_id (str): The GraphQL ID of the marketing event to delete.
+
+        Returns:
+            JSON string with the ID of the deleted event.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "delete_marketing_event",
+                }
+            )
+        graphql_mutation = """
+        mutation marketingEventDelete($id: ID!) {
+          marketingEventDelete(id: $id) {
+            deletedId
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        return self._execute_query(
+            "marketingEventDelete", graphql_mutation, variables={"id": event_id}
+        )
+
+    async def get_locations(self, limit: int = 25) -> str:
+        """
+        [Locations] - List all fulfillment locations.
+
+        Description: Retrieves stores, warehouses, and pop-up locations used for inventory and fulfillment.
+
+        Required Permissions: read_locations
+
+        Example Usage:
+        - "Show me all store locations." -> get_locations()
+        - "List the first 10 locations." -> get_locations(limit=10)
+
+        Args:
+            limit (int): Maximum number of locations to return (1-250).
+
+        Returns:
+            JSON string with a list of locations including id, name, address, and active status.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "get_locations",
+                }
+            )
+        graphql_query = f"\n        {{\n          locations(first: {limit}) {{\n            edges {{\n              node {{\n                id\n                name\n                address {{\n                  address1\n                  city\n                  zip\n                  countryCodeV2\n                }}\n                isActive\n              }}\n            }}\n          }}\n        }}\n        "
+        return self._execute_query("get_locations", graphql_query)
+
+    async def get_location_by_id(self, location_id: str) -> str:
+        """
+        [Locations] - Retrieve a specific location by its GraphQL ID.
+
+        Description: Fetches detailed information for a single location, including its fulfillment capabilities.
+
+        Required Permissions: read_locations
+
+        Example Usage:
+        - "Get details for location 'gid://shopify/Location/123'." -> get_location_by_id(location_id="gid://shopify/Location/123")
+
+        Args:
+            location_id (str): The GraphQL ID of the location.
+
+        Returns:
+            JSON string with detailed location information.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "get_location_by_id",
+                }
+            )
+        graphql_query = f'\n        {{\n          location(id: "{location_id}") {{\n            id\n            name\n            address {{\n                address1\n                address2\n                city\n                zip\n                province\n                country\n            }}\n            fulfillsOnlineOrders\n          }}\n        }}\n        '
+        return self._execute_query("get_location_by_id", graphql_query)
+
+    async def activate_location(self, location_id: str) -> str:
+        """
+        [Locations] - Activate a location for fulfillment.
+
+        Description: Enables a disabled location, allowing it to be used for fulfilling orders.
+
+        Required Permissions: write_locations
+
+        Example Usage:
+        - "Activate location 'gid://shopify/Location/456'." -> activate_location(location_id="gid://shopify/Location/456")
+
+        Args:
+            location_id (str): The GraphQL ID of the location to activate.
+
+        Returns:
+            JSON string confirming the location was activated or an error message.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "activate_location",
+                }
+            )
+        graphql_mutation = """
+        mutation locationActivate($id: ID!) {
+          locationActivate(id: $id) {
+            location {
+              id
+              isActive
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        return self._execute_query(
+            "locationActivate", graphql_mutation, variables={"id": location_id}
+        )
+
+    async def deactivate_location(self, location_id: str) -> str:
+        """
+        [Locations] - Deactivate a location.
+
+        Description: Disables an active location, preventing it from being used for new fulfillments.
+
+        Required Permissions: write_locations
+
+        Example Usage:
+        - "Deactivate location 'gid://shopify/Location/789'." -> deactivate_location(location_id="gid://shopify/Location/789")
+
+        Args:
+            location_id (str): The GraphQL ID of the location to deactivate.
+
+        Returns:
+            JSON string confirming the location was deactivated or an error message.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "deactivate_location",
+                }
+            )
+        graphql_mutation = """
+        mutation locationDeactivate($id: ID!) {
+          locationDeactivate(id: $id) {
+            location {
+              id
+              isActive
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        return self._execute_query(
+            "locationDeactivate", graphql_mutation, variables={"id": location_id}
+        )
+
+    async def get_returns(self, limit: int = 10) -> str:
+        """
+        [Returns] - Retrieve a list of returns.
+
+        Description: Fetches a list of all returns, which represent requests by customers to return items.
+
+        Required Permissions: read_returns
+
+        Example Usage:
+        - "Show me the last 10 returns." -> get_returns(limit=10)
+
+        Args:
+            limit (int): The maximum number of returns to retrieve.
+
+        Returns:
+            JSON string with a list of returns including their status and associated order.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "get_returns",
+                }
+            )
+        graphql_query = f"\n        {{\n          returns(first: {limit}) {{\n            edges {{\n              node {{\n                id\n                name\n                status\n                order {{\n                  id\n                  name\n                }}\n              }}\n            }}\n          }}\n        }}\n        "
+        return self._execute_query("get_returns", graphql_query)
+
+    async def get_return_by_id(self, return_id: str) -> str:
+        """
+        [Returns] - Retrieve a specific return by its GraphQL ID.
+
+        Description: Fetches detailed information for a single return, including its line items and status.
+
+        Required Permissions: read_returns
+
+        Example Usage:
+        - "Get details for return 'gid://shopify/Return/123'." -> get_return_by_id(return_id="gid://shopify/Return/123")
+
+        Args:
+            return_id (str): The GraphQL ID of the return.
+
+        Returns:
+            JSON string with detailed return information.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "get_return_by_id",
+                }
+            )
+        graphql_query = f'\n        {{\n          return(id: "{return_id}") {{\n            id\n            name\n            status\n            returnLineItems(first: 10) {{\n              edges {{\n                node {{\n                  id\n                  quantity\n                  returnReason\n                  customerNote\n                }}\n              }}\n            }}\n          }}\n        }}\n        '
+        return self._execute_query("get_return_by_id", graphql_query)
+
+    async def create_return(self, order_id: str, return_line_items: list[dict]) -> str:
+        """
+        [Returns] - Initiate a return for an order.
+
+        Description: Creates a return request for one or more items from a specified order.
+
+        Required Permissions: write_returns
+
+        Example Usage:
+        - "Start a return for order 'gid://.../Order/123' for 1 unit of item 'gid://.../LineItem/456'." -> create_return(order_id="gid://.../123", return_line_items=[{{"fulfillmentLineItemId": "gid://.../456", "quantity": 1}}])
+
+        Args:
+            order_id (str): The GraphQL ID of the order being returned.
+            return_line_items (list[dict]): A list of items to return, each a dict with 'fulfillmentLineItemId' and 'quantity'.
+
+        Returns:
+            JSON string with the newly created return's data.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "create_return",
+                }
+            )
+        input_vars = {"orderId": order_id, "returnLineItems": return_line_items}
+        graphql_mutation = """
+        mutation returnRequest($input: ReturnRequestInput!) {
+          returnRequest(input: $input) {
+            return {
+              id
+              status
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        return self._execute_query(
+            "returnRequest", graphql_mutation, variables={"input": input_vars}
+        )
+
+    async def approve_return(self, return_id: str, note: Optional[str] = None) -> str:
+        """
+        [Returns] - Approve a return request.
+
+        Description: Marks a return as approved, allowing the customer to proceed with sending back the items.
+
+        Required Permissions: write_returns
+
+        Example Usage:
+        - "Approve return 'gid://shopify/Return/123'." -> approve_return(return_id="gid://shopify/Return/123")
+
+        Args:
+            return_id (str): The GraphQL ID of the return to approve.
+            note (Optional[str]): An optional note for the approval.
+
+        Returns:
+            JSON string confirming the return was approved.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "approve_return",
+                }
+            )
+        variables = {"id": return_id, "note": note}
+        graphql_mutation = """
+        mutation returnApprove($id: ID!, $note: String) {
+          returnApprove(id: $id, note: $note) {
+            return {
+              id
+              status
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        return self._execute_query(
+            "returnApprove", graphql_mutation, variables=variables
+        )
+
+    async def decline_return(
+        self, return_id: str, reason: str, note: Optional[str] = None
+    ) -> str:
+        """
+        [Returns] - Decline a return request.
+
+        Description: Rejects a customer's return request, with a mandatory reason.
+
+        Required Permissions: write_returns
+
+        Example Usage:
+        - "Decline return 'gid://.../Return/123' because it's past the return window." -> decline_return(return_id="gid://.../123", reason="POLICY_VIOLATION", note="Item returned after 30-day policy.")
+
+        Args:
+            return_id (str): The GraphQL ID of the return to decline.
+            reason (str): The reason for declining (e.g., POLICY_VIOLATION, OTHER).
+            note (Optional[str]): An optional note with more details.
+
+        Returns:
+            JSON string confirming the return was declined.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "decline_return",
+                }
+            )
+        variables = {"id": return_id, "declineReason": reason, "note": note}
+        graphql_mutation = """
+        mutation returnDecline($id: ID!, $declineReason: ReturnDeclineReason!, $note: String) {
+          returnDecline(id: $id, declineReason: $declineReason, note: $note) {
+            return {
+              id
+              status
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        return self._execute_query(
+            "returnDecline", graphql_mutation, variables=variables
+        )
+
+    async def close_return(self, return_id: str, note: Optional[str] = None) -> str:
+        """
+        [Returns] - Close a return.
+
+        Description: Finalizes a return process after items have been received or the process is otherwise complete.
+
+        Required Permissions: write_returns
+
+        Example Usage:
+        - "Close return 'gid://.../Return/123'." -> close_return(return_id="gid://.../123")
+
+        Args:
+            return_id (str): The GraphQL ID of the return to close.
+            note (Optional[str]): An optional note for closing the return.
+
+        Returns:
+            JSON string confirming the return was closed.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "close_return",
+                }
+            )
+        variables = {"id": return_id, "note": note}
+        graphql_mutation = """
+        mutation returnClose($id: ID!, $note: String) {
+          returnClose(id: $id, note: $note) {
+            return {
+              id
+              status
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        return self._execute_query("closeReturn", graphql_mutation, variables=variables)
+
+    async def create_staged_upload(
+        self, filename: str, mime_type: str, resource: str = "IMAGE"
+    ) -> str:
+        """
+        [Files & Media Management] - Step 1/2 for File Upload. Creates a staged upload target.
+
+        Description: This is the first step to upload a file. It prepares a secure, temporary URL where the file can be uploaded via an HTTP request. After a successful response from this tool, the file must be uploaded to the `url` provided in the response. Finally, call `file_create` with the `resourceUrl` to complete the process.
+
+        Required Permissions: write_files
+
+        Example Usage:
+        - "Prepare to upload a new product image named 'tshirt.jpg'." -> create_staged_upload(filename='tshirt.jpg', mime_type='image/jpeg', resource='IMAGE')
+
+        Args:
+            filename (str): The name of the file to be uploaded.
+            mime_type (str): The MIME type of the file (e.g., 'image/jpeg', 'application/pdf').
+            resource (str): The type of resource. Defaults to 'IMAGE'. Valid values: IMAGE, VIDEO, THREED_MODEL, FILE.
+
+        Returns:
+            JSON string with the staged upload target details, including `url` for upload and `resourceUrl` for `file_create`.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "create_staged_upload",
+                }
+            )
+        input_vars = {
+            "input": [
+                {
+                    "filename": filename,
+                    "mimeType": mime_type,
+                    "resource": resource,
+                    "httpMethod": "PUT",
+                }
+            ]
+        }
+        graphql_mutation = """
+        mutation stagedUploadsCreate($input: [StagedUploadInput!]!) {
+            stagedUploadsCreate(input: $input) {
+                stagedTargets {
+                    url
+                    resourceUrl
+                    parameters {
+                        name
+                        value
+                    }
+                }
+                userErrors {
+                    field
+                    message
+                }
+            }
+        }
+        """
+        return self._execute_query(
+            "stagedUploadsCreate", graphql_mutation, variables=input_vars
+        )
+
+    async def file_create(self, original_source: str, content_type: str) -> str:
+        """
+        [Files & Media Management] - Step 2/2 for File Upload. Commits a file after staged upload.
+
+        Description: This is the final step to upload a file. After the file has been uploaded to the temporary URL from `create_staged_upload`, this tool registers it with Shopify, making it accessible in the Files section of the admin.
+
+        Required Permissions: write_files
+
+        Example Usage:
+        - "Finalize the upload for the file located at 'resourceUrl_from_staged_upload'." -> file_create(original_source='resourceUrl_from_staged_upload', content_type='IMAGE')
+
+        Args:
+            original_source (str): The `resourceUrl` returned by the `create_staged_upload` tool.
+            content_type (str): The content type of the file. Valid values: IMAGE, VIDEO, THREED_MODEL, FILE.
+
+        Returns:
+            JSON string with the newly created file's details or an error message.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "file_create",
+                }
+            )
+        input_vars = {
+            "files": [{"originalSource": original_source, "contentType": content_type}]
+        }
+        graphql_mutation = """
+        mutation fileCreate($files: [FileCreateInput!]!) {
+            fileCreate(files: $files) {
+                files {
+                    id
+                    fileStatus
+                }
+                userErrors {
+                    field
+                    message
+                }
+            }
+        }
+        """
+        return self._execute_query("fileCreate", graphql_mutation, variables=input_vars)
+
+    async def get_files(self, limit: int = 25) -> str:
+        """
+        [Files & Media Management] - Retrieve a list of files from the store.
+
+        Description: Fetches a list of all uploaded files (images, videos, documents) in the Shopify admin.
+
+        Required Permissions: read_files
+
+        Example Usage:
+        - "Show me the last 10 files uploaded to the store." -> get_files(limit=10)
+
+        Args:
+            limit (int): The maximum number of files to return (1-250).
+
+        Returns:
+            JSON string with a list of files, including their ID, filename, and URL.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "get_files",
+                }
+            )
+        graphql_query = f" \n        {{\n            files(first: {limit}) {{\n                edges {{\n                    node {{\n                        ... on MediaImage {{\n                            id\n                            image {{\n                                url\n                            }}\n                        }}\n                        ... on GenericFile {{\n                            id\n                            url\n                        }}\n                        ... on Video {{\n                            id\n                            originalSource {{\n                                url\n                            }}\n                        }}\n                    }}\n                }}\n            }}\n        }}\n        "
+        return self._execute_query("get_files", graphql_query)
+
+    async def delete_files(self, file_ids: list[str]) -> str:
+        """
+        [Files & Media Management] - Delete one or more files from the store.
+
+        Description: Permanently removes files from the Shopify admin based on their GraphQL IDs.
+
+        Required Permissions: write_files
+
+        Example Usage:
+        - "Delete the file with ID 'gid://shopify/GenericFile/12345'." -> delete_files(file_ids=['gid://shopify/GenericFile/12345'])
+
+        Args:
+            file_ids (list[str]): A list of file GraphQL IDs to be deleted.
+
+        Returns:
+            JSON string with the IDs of the deleted files or an error message.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "delete_files",
+                }
+            )
+        variables = {"fileIds": file_ids}
+        graphql_mutation = """
+        mutation fileDelete($fileIds: [ID!]!) {
+            fileDelete(fileIds: $fileIds) {
+                deletedFileIds
+                userErrors {
+                    field
+                    message
+                }
+            }
+        }
+        """
+        return self._execute_query("fileDelete", graphql_mutation, variables=variables)
+
+    async def get_draft_orders(
+        self, status: Optional[str] = None, limit: int = 10
+    ) -> str:
+        """
+        [Draft Orders] - Retrieve a list of draft orders.
+
+        Description: Fetches draft orders, optionally filtering by status.
+
+        Required Permissions: read_draft_orders
+
+        Example Usage:
+        - "Show me the last 5 open draft orders." -> get_draft_orders(status="OPEN", limit=5)
+
+        Args:
+            status (Optional[str]): Filter by status (OPEN, COMPLETED, INVOICE_SENT).
+            limit (int): The maximum number of draft orders to return.
+
+        Returns:
+            JSON string with a list of draft orders.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "get_draft_orders",
+                }
+            )
+        query_filter = f"status:{status}" if status else ""
+        graphql_query = f'\n        {{\n          draftOrders(first: {limit}, query: "{query_filter}") {{\n            edges {{\n              node {{\n                id\n                name\n                status\n                totalPrice\n                customer {{\n                  id\n                  displayName\n                }}\n              }}\n            }}\n          }}\n        }}\n        '
+        return self._execute_query("get_draft_orders", graphql_query)
+
+    async def get_draft_order_by_id(self, draft_order_id: str) -> str:
+        """
+        [Draft Orders] - Get a specific draft order by its GraphQL ID.
+
+        Description: Retrieves detailed information for a single draft order using its GID.
+
+        Required Permissions: read_draft_orders
+
+        Example Usage:
+        - "Get details for draft order 'gid://shopify/DraftOrder/12345'." -> get_draft_order_by_id(draft_order_id="gid://shopify/DraftOrder/12345")
+
+        Args:
+            draft_order_id (str): The full GraphQL ID of the draft order.
+
+        Returns:
+            JSON string with the draft order's details.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "get_draft_order_by_id",
+                }
+            )
+        graphql_query = f'\n        {{\n          draftOrder(id: "{draft_order_id}") {{\n            id\n            name\n            status\n            note\n            totalPrice\n            lineItems(first: 10) {{\n                edges {{\n                    node {{\n                        id\n                        title\n                        quantity\n                        originalUnitPrice\n                    }}\n                }}\n            }}\n          }}\n        }}\n        '
+        return self._execute_query("get_draft_order_by_id", graphql_query)
+
+    async def create_draft_order(
+        self,
+        line_items: list[dict],
+        customer_id: Optional[str] = None,
+        note: Optional[str] = None,
+    ) -> str:
+        """
+        [Draft Orders] - Create a new draft order.
+
+        Description: Creates a draft order, which can be used to invoice customers or create orders in the admin.
+
+        Required Permissions: write_draft_orders
+
+        Example Usage:
+        - "Create a draft order for customer 'gid://.../Customer/123' with one 't-shirt' variant 'gid://.../Variant/456'." -> create_draft_order(line_items=[{{"variantId": "gid://.../Variant/456", "quantity": 1}}], customer_id="gid://.../Customer/123")
+
+        Args:
+            line_items (list[dict]): A list of line items, each a dict with 'variantId' and 'quantity'.
+            customer_id (Optional[str]): The GraphQL ID of the customer.
+            note (Optional[str]): A note for the draft order.
+
+        Returns:
+            JSON string with the created draft order's data.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "create_draft_order",
+                }
+            )
+        input_vars = {"lineItems": line_items}
+        if customer_id:
+            input_vars["customerId"] = customer_id
+        if note:
+            input_vars["note"] = note
+        graphql_mutation = """
+        mutation draftOrderCreate($input: DraftOrderInput!) {
+          draftOrderCreate(input: $input) {
+            draftOrder {
+              id
+              name
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        return self._execute_query(
+            "draftOrderCreate", graphql_mutation, variables={"input": input_vars}
+        )
+
+    async def update_draft_order(self, draft_order_id: str, **kwargs) -> str:
+        """
+        [Draft Orders] - Update an existing draft order.
+
+        Description: Modifies a draft order before it is completed, e.g., adding line items or updating customer info.
+
+        Required Permissions: write_draft_orders
+
+        Example Usage:
+        - "Add a note 'Customer wants gift wrap' to draft order 'gid://.../DraftOrder/123'." -> update_draft_order(draft_order_id="gid://.../123", note="Customer wants gift wrap")
+
+        Args:
+            draft_order_id (str): The GraphQL ID of the draft order.
+            **kwargs: Fields to update (e.g., note, customerId, lineItems, shippingAddress).
+
+        Returns:
+            JSON string with the updated draft order data.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "update_draft_order",
+                }
+            )
+        input_vars = {key: value for key, value in kwargs.items() if value is not None}
+        graphql_mutation = """
+        mutation draftOrderUpdate($id: ID!, $input: DraftOrderInput!) {
+          draftOrderUpdate(id: $id, input: $input) {
+            draftOrder {
+              id
+              name
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        return self._execute_query(
+            "draftOrderUpdate",
+            graphql_mutation,
+            variables={"id": draft_order_id, "input": input_vars},
+        )
+
+    async def complete_draft_order(
+        self, draft_order_id: str, payment_pending: bool = False
+    ) -> str:
+        """
+        [Draft Orders] - Complete a draft order, converting it into a real order.
+
+        Description: Finalizes a draft order. If payment is not captured, it creates an order with a pending payment.
+
+        Required Permissions: write_draft_orders, write_orders
+
+        Example Usage:
+        - "Complete draft order 'gid://.../DraftOrder/123'." -> complete_draft_order(draft_order_id="gid://.../123")
+
+        Args:
+            draft_order_id (str): The GraphQL ID of the draft order.
+            payment_pending (bool): Set to true if payment will be collected later.
+
+        Returns:
+            JSON string with the newly created order's ID.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "complete_draft_order",
+                }
+            )
+        graphql_mutation = """
+        mutation draftOrderComplete($id: ID!, $paymentPending: Boolean) {
+          draftOrderComplete(id: $id, paymentPending: $paymentPending) {
+            draftOrder {
+              order {
+                id
+                name
+              }
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        variables = {"id": draft_order_id, "paymentPending": payment_pending}
+        return self._execute_query(
+            "draftOrderComplete", graphql_mutation, variables=variables
+        )
+
+    async def send_draft_order_invoice(self, draft_order_id: str) -> str:
+        """
+        [Draft Orders] - Send an invoice to the customer for a draft order.
+
+        Description: Emails an invoice to the customer associated with the draft order, allowing them to complete payment.
+
+        Required Permissions: write_draft_orders
+
+        Example Usage:
+        - "Send an invoice for draft order 'gid://.../DraftOrder/123'." -> send_draft_order_invoice(draft_order_id="gid://.../123")
+
+        Args:
+            draft_order_id (str): The GraphQL ID of the draft order.
+
+        Returns:
+            JSON string confirming the invoice was sent.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "send_draft_order_invoice",
+                }
+            )
+        graphql_mutation = """
+        mutation draftOrderInvoiceSend($id: ID!) {
+          draftOrderInvoiceSend(id: $id) {
+            draftOrder {
+              id
+              status
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        return self._execute_query(
+            "draftOrderInvoiceSend", graphql_mutation, variables={"id": draft_order_id}
+        )
+
+    async def delete_draft_order(self, draft_order_id: str) -> str:
+        """
+        [Draft Orders] - Delete a draft order.
+
+        Description: Permanently deletes a draft order. This action cannot be undone.
+
+        Required Permissions: write_draft_orders
+
+        Example Usage:
+        - "Delete draft order 'gid://.../DraftOrder/123'." -> delete_draft_order(draft_order_id="gid://.../123")
+
+        Args:
+            draft_order_id (str): The GraphQL ID of the draft order to delete.
+
+        Returns:
+            JSON string with the ID of the deleted draft order.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "delete_draft_order",
+                }
+            )
+        graphql_mutation = """
+        mutation draftOrderDelete($id: ID!) {
+          draftOrderDelete(id: $id) {
+            deletedId
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        return self._execute_query(
+            "draftOrderDelete", graphql_mutation, variables={"id": draft_order_id}
         )

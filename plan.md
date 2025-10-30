@@ -1,410 +1,183 @@
-# Shopify AI Management App - Enhanced Plan (Make.com Insights Integrated)
+# Shopify AI Management App - Complete API Coverage Plan
 
-## 🎯 VISION: AI-Powered Shopify Store Manager with Make.com-Inspired Automation
+## 🎯 VISION: AI-Powered Shopify Store Manager with Full API Coverage
 
-**Core Philosophy**: Build an intelligent AI assistant that combines conversational management with automated workflows inspired by Make.com's most powerful Shopify integrations.
+**Core Philosophy**: Build an intelligent AI assistant with comprehensive access to all Shopify Admin and Storefront API capabilities.
 
 **Tech Stack**:
 1. Cloud-based AI models (Mistral AI primary, OpenRouter secondary, OpenAI fallback)
-2. Shopify Admin + Storefront GraphQL APIs
+2. Shopify Admin + Storefront GraphQL APIs (100% coverage)
 3. Agno agent framework for tool orchestration
 4. Make.com-inspired automation patterns
 
 ---
 
-## 🆕 NEW FEATURES INSPIRED BY MAKE.COM
-
-Based on Make.com's Shopify integration templates and automation library, the following capabilities should be added to enhance the AI Store Manager:
-
-### 📦 **Inventory & Product Management**
-- **Bulk Product Operations**: Create/update multiple products in batches
-- **Inventory Adjustments**: Adjust inventory levels with reason tracking
-- **Product Variants**: Full variant management (create, update, delete)
-- **Collections Management**: Create and manage product collections
-- **Metafields**: Read/write custom metafields for products, customers, orders
-- **Tags Management**: Automated tagging based on rules or AI suggestions
-
-### 💰 **Pricing & Promotions**
-- **Discount Code Management**: Create, update, list discount codes
-- **Price Rules**: Automated pricing adjustments based on conditions
-- **Gift Card Operations**: Create and manage gift cards
-- **Price Monitoring**: Track price changes and competitor analysis
-
-### 📧 **Customer Engagement**
-- **Email Notifications**: Automated customer emails for order status, inventory restocks
-- **Customer Segmentation**: Tag-based customer grouping for targeted campaigns
-- **Loyalty & Rewards**: Track customer lifetime value, implement reward programs
-- **Review Management**: Collect and respond to product reviews
-
-### 📊 **Order Processing & Fulfillment**
-- **Fulfillment Workflows**: Create fulfillments, assign to locations
-- **Refund Processing**: Issue refunds with reason tracking
-- **Order Tagging**: Automated order classification and prioritization
-- **Shipping Label Generation**: Integration with shipping providers
-- **Returns Management**: Handle returns and exchanges
-
-### 🔔 **Webhooks & Event Management**
-- **Real-time Webhooks**: Subscribe to Shopify events (new orders, inventory changes, etc.)
-- **Event-Driven Automation**: Trigger actions based on store events
-- **Custom Notifications**: Slack/email alerts for critical events
-
-### 📈 **Analytics & Reporting**
-- **Sales Analytics**: Revenue trends, best-selling products, AOV tracking
-- **Customer Analytics**: Customer acquisition, retention, lifetime value
-- **Inventory Reports**: Stock levels, low inventory alerts, turnover rates
-- **Custom Reports**: Export data as CSV/PDF with custom date ranges
-- **Predictive Analytics**: AI-powered sales forecasting and demand prediction
-
-### 🤖 **AI-Enhanced Features**
-- **Product Description Generator**: AI-generated SEO-optimized product descriptions
-- **Smart Tagging**: AI-suggested tags and collections for products
-- **Customer Inquiry Assistant**: AI responses to common customer questions
-- **Inventory Forecasting**: Predict stock needs based on historical data
-- **Pricing Optimization**: AI recommendations for optimal pricing
-
----
-
-## Phase 1: Remove Ollama & Simplify Model Selection ✅
-**Goal**: Strip out all Ollama-related code and create clean OpenRouter → OpenAI fallback
-
-### Tasks:
-- [x] Remove `ollama` package from requirements.txt
-- [x] Remove Ollama import and availability check from AIOrchestrator
-- [x] Simplify model selection to: OpenRouter (primary) → OpenAI (fallback)
-- [x] Remove `_is_ollama_available()` method entirely
-- [x] Update `get_best_model()` to only check cloud API keys
-- [x] Remove all Ollama-related error logging
-- [x] Update model display names to show only cloud options
-- [x] Test fallback chain: OpenRouter → OpenAI → No model available
-
-**Status**: ✅ COMPLETE
-
----
-
-## Phase 2: Enhance Shopify Tools for vLLM/vSLM Compatibility ✅
-**Goal**: Rewrite Shopify tools with better descriptions, examples, and structured schemas
-
-### Tasks:
-- [x] Add detailed docstrings with usage examples for each tool
-- [x] Add parameter validation and type hints
-- [x] Include permission requirements in tool descriptions
-- [x] Add example queries that demonstrate proper tool usage
-- [x] Add tool categorization (Product/Customer/Order Management)
-- [x] Test tools with Agno agent
-- [x] Verify backward compatibility
-
-**Status**: ✅ COMPLETE
-
----
-
-## Phase 3: Improve AI Agent Instructions & Context ✅
-**Goal**: Add system prompts and context to help AI understand Shopify operations
-
-### Tasks:
-- [x] Create Shopify-specific system instructions for agent
-- [x] Add context about common Shopify operations
-- [x] Define tool usage patterns and best practices
-- [x] Add examples of complex multi-tool workflows
-- [x] Include GraphQL ID format guidance (gid://shopify/Resource/ID)
-- [x] Add error recovery patterns for failed API calls
-
-**Status**: ✅ COMPLETE
-
----
-
-## Phase 4: Add Mistral AI Integration ✅
-**Goal**: Integrate Mistral AI as the primary model provider with native Agno support
-
-### Tasks:
-- [x] Install `mistralai` Python SDK package
-- [x] Add `MISTRAL_API_KEY` to settings state and UI
-- [x] Create Mistral model initialization in AIOrchestrator
-- [x] Update model priority: Mistral → OpenRouter → OpenAI
-- [x] Add Mistral API key test functionality in AIModelState
-- [x] Update settings page with Mistral API key input field
-- [x] Test Agno agent with MistralChat model
-- [x] Verify streaming responses work with Mistral
-- [x] Update current_model_name display to show Mistral
-
-**Status**: ✅ COMPLETE
-
----
-
-## Phase 4.5: Add Shopify Storefront API Integration ✅
-**Goal**: Enable full Shopify Storefront API support alongside Admin API
-
-### Tasks:
-- [x] Add `SHOPIFY_STOREFRONT_TOKEN` to SettingsState with env var loading
-- [x] Add visibility toggle for storefront token in settings
-- [x] Create computed var `is_shopify_storefront_token_set` to check token status
-- [x] Add Storefront API section to settings page UI
-- [x] Implement "Test Storefront Token" functionality in AIModelState
-- [x] Add `_test_shopify_storefront()` method using GraphQL shop query
-- [x] Add storefront testing UI with spinner and success/error display
-- [x] Update ChatState to check storefront token availability
-- [x] Expose storefront API status to AI agent via system context
-- [x] Document storefront token requirement in ShopifyTools
-
-**Status**: ✅ COMPLETE
-
----
-
-## Phase 4.6: Create Shopify Storefront Tools ✅
-**Goal**: Implement customer-facing Storefront API tools for the AI agent
-
-### Tasks:
-- [x] Create new `ShopifyStorefrontTools` toolkit class
-- [x] Implement `search_products` tool for product catalog queries
-- [x] Implement `get_product_by_handle` tool for detailed product info
-- [x] Add vLLM/vSLM-friendly docstrings with usage examples
-- [x] Use GraphQL queries via httpx with proper authentication
-- [x] Add `[Storefront]` prefix to distinguish from Admin tools
-- [x] Integrate tools into ChatState agent initialization
-- [x] Update system prompt to guide agent on when to use each API
-- [x] Test toolkit initialization and tool signatures
-
-**Status**: ✅ COMPLETE
-
----
-
-## Phase 5: Expand Admin API Tools (Make.com Inspired) ✅
-**Goal**: Add critical Shopify Admin tools inspired by Make.com's most-used automation templates
-
-### 5A: Product & Inventory Tools ✅
-- [x] **Create Product Variant**: Add variants to existing products
-- [x] **Update Product Variant**: Modify variant properties (SKU, price, inventory)
-- [x] **Delete Product Variant**: Remove variants from products
-- [x] **Adjust Inventory Level**: Update stock quantities with reason tracking
-- [x] **Get Inventory Levels**: Query inventory across multiple locations
-- [x] **Create Collection**: Create smart or manual collections
-- [x] **Add Products to Collection**: Bulk add products to collections
-- [x] **Get Product Metafields**: Read custom product metadata
-- [x] **Set Product Metafield**: Write/update custom metafields
-
-**Status**: ✅ COMPLETE
-
-### 5B: Order & Fulfillment Tools ✅
-- [x] **Create Fulfillment**: Mark orders as fulfilled with tracking info
-- [x] **Get Fulfillment Orders**: Retrieve fulfillment details
-- [x] **Cancel Order**: Cancel unfulfilled orders
-- [x] **Create Refund**: Issue full or partial refunds
-- [x] **Add Order Note**: Add internal notes to orders
-- [x] **Tag Order**: Apply tags for order classification
-- [x] **Update Fulfillment Tracking**: Update shipping status
-
-**Status**: ✅ COMPLETE
-
-### 5C: Customer & Engagement Tools ✅
-- [x] **Tag Customer**: Apply tags for segmentation
-- [x] **Remove Customer Tags**: Clean up customer tags
-- [x] **Get Customer Metafields**: Retrieve custom customer data
-- [x] **Set Customer Metafield**: Store loyalty points, preferences, etc.
-- [x] **Search Orders by Customer Email**: Quick customer order lookup
-
-**Status**: ✅ COMPLETE
-
-### 5D: Pricing & Promotions Tools ✅
-- [x] **Create Basic Discount Code**: Generate percentage-based promo codes
-- [x] **Get Discount Codes**: List all discount code nodes
-- [x] **Update Basic Discount Code**: Modify discount properties
-- [x] **Delete Discount Code**: Remove expired codes
-- [x] **Create Gift Card**: Generate gift cards with custom amounts
-
-**Status**: ✅ COMPLETE
-
----
-
-## Phase 6: Event-Driven Automation (Webhook System) 
-**Goal**: Implement real-time event monitoring and automated workflows
-
-### Tasks:
-- [ ] Design webhook management system for Shopify events
-- [ ] Create webhook subscription tools (new orders, inventory changes, etc.)
-- [ ] Implement event listener service for real-time notifications
-- [ ] Add Slack/email notification integration for critical events
-- [ ] Build rule-based automation engine (if X happens, do Y)
-- [ ] Create UI for managing automation rules
-- [ ] Add webhook testing and debugging tools
-
-**Status**: ⏳ BACKLOG
-
----
-
-## Phase 7: Advanced Analytics Dashboard
-**Goal**: Build comprehensive analytics and reporting system
-
-### 7A: Sales Analytics
-- [ ] Revenue trends (daily, weekly, monthly)
-- [ ] Best-selling products dashboard
-- [ ] Average Order Value (AOV) tracking
-- [ ] Conversion rate monitoring
-- [ ] Sales by traffic source
-
-### 7B: Customer Analytics
-- [ ] Customer lifetime value (CLV) calculation
-- [ ] Customer acquisition cost (CAC) tracking
-- [ ] Retention rate metrics
-- [ ] Customer segmentation visualization
-- [ ] Churn prediction
-
-### 7C: Inventory Analytics
-- [ ] Stock level monitoring with low inventory alerts
-- [ ] Inventory turnover rates
-- [ ] Product velocity tracking
-- [ ] Reorder point recommendations
-- [ ] Dead stock identification
-
-### 7D: Reporting Features
-- [ ] Custom date range selection
-- [ ] Export reports as CSV/PDF
-- [ ] Scheduled report generation
-- [ ] Email report delivery
-- [ ] Custom KPI widget builder
-
-**Status**: ⏳ BACKLOG
-
----
-
-## Phase 8: AI-Enhanced Features
-**Goal**: Leverage AI for intelligent store management
-
-### Tasks:
-- [ ] **Product Description Generator**: AI-generated SEO product descriptions
-- [ ] **Smart Tagging System**: AI-suggested tags for products/orders/customers
-- [ ] **Inventory Forecasting**: Predict stock needs using historical data
-- [ ] **Pricing Optimization**: AI recommendations for competitive pricing
-- [ ] **Customer Support Assistant**: AI-powered responses to common queries
-- [ ] **Sentiment Analysis**: Analyze customer reviews and feedback
-- [ ] **Fraud Detection**: AI-based suspicious order flagging
-
-**Status**: ⏳ BACKLOG
-
----
-
 ## 📊 Current Implementation Status
 
-### ✅ What's Working:
-- **Settings Management**:
-  - Shopify Admin API credentials (store URL + access token)
-  - Shopify Storefront API credentials (store URL + storefront token)
-  - AI model API keys (Mistral, OpenRouter, OpenAI)
-  - Credential visibility toggles
-  - Independent testing for each API type
-- **Shopify Integration**:
-  - **35 Admin API tools** for management operations (Product/Inventory/Customer/Order/Fulfillment/Promotions)
-  - **2 Storefront API tools** for customer-facing queries (Product Search/Details)
-  - Dual API architecture with clear separation of concerns
-  - GraphQL-based queries with proper authentication
-  - Intelligent error handling and recovery
-- **AI Agent**:
-  - Streaming responses with multiple AI models
-  - Cloud-only model selection: Mistral → OpenRouter → OpenAI
-  - Conversation history with markdown support
-  - Processing status indicators
-  - Agent-based architecture with Agno framework
-  - **Intelligent tool routing** between Admin and Storefront APIs
-  - System prompt guidance for appropriate tool selection
-- **Chat Interface**:
-  - Natural language queries to both APIs
-  - Real-time streaming responses
-  - Tool call visibility
-  - Error handling and recovery
+### ✅ Phases 1-12 Complete:
+- **Settings Management**: Shopify Admin/Storefront credentials, AI model API keys
+- **74 Total Tools Implemented**:
+  - 72 Admin API tools (Products, Inventory, Customers, Orders, Fulfillments, Promotions, Draft Orders, Locations, Returns, Files, Reports, Content, Marketing)
+  - 2 Storefront API tools (Product Search/Details)
+- **AI Agent**: Streaming responses, cloud-only models, tool orchestration
+- **Chat Interface**: Natural language queries with real-time responses
 
-### 🎯 Tool Inventory
-
-| Category | Admin API Tools | Storefront API Tools |
-|----------|----------------|----------------------|
-| **Products** | 10 (get, get-by-id, create, variants, collections, metafields) | 2 (search, get-by-handle) |
-| **Inventory** | 2 (get-levels, adjust) | - |
-| **Customers** | 8 (get, update, get-orders, tag, remove-tags, metafields, search-orders) | - |
-| **Orders** | 3 (get, get-by-id, update) | - |
-| **Fulfillment** | 7 (create, get, cancel, refund, note, tag, tracking) | - |
-| **Promotions** | 5 (discount codes: create, list, update, delete; gift cards: create) | - |
-| **Total** | **35 tools** | **2 tools** |
-
-### 🚀 Make.com Integration Priorities
-
-Based on Make.com's most popular Shopify templates, these features should be prioritized:
-
-**HIGH PRIORITY** (Phase 5): ✅ COMPLETE
-1. ✅ Product Variants (create, update, delete)
-2. ✅ Inventory Management (adjust levels, track across locations)
-3. ✅ Fulfillment Operations (create fulfillments, update tracking)
-4. ✅ Refund Processing (issue refunds with reasons)
-5. ✅ Discount Code Management (create, list, update, delete)
-6. ✅ Collections Management (create, add products)
-7. ✅ Metafields (product, customer, order metadata)
-8. ✅ Customer Tagging & Segmentation
-9. ✅ Gift Card Generation
-
-**MEDIUM PRIORITY** (Phase 6):
-1. Webhook Subscriptions (real-time event monitoring)
-2. Order Tagging (automated classification) - ✅ Basic tagging complete
-3. Customer Segmentation (tag-based grouping) - ✅ Complete
-4. Email Notifications (automated customer communications)
-
-**FUTURE ENHANCEMENTS** (Phases 7-8):
-1. Analytics Dashboard (sales, inventory, customer metrics)
-2. AI-Generated Content (product descriptions, tags)
-3. Predictive Analytics (inventory forecasting, demand prediction)
-4. Pricing Optimization (AI-powered price recommendations)
+**Progress**: 74/120 tools (62% complete)
 
 ---
 
-## 📝 Implementation Notes
+## ✅ Phase 12: Marketing & Campaigns (Tier 3B) ✅
+**Status**: Complete - 5/5 tools implemented
 
-**Phase 1-5D Summary:**
-- ✅ Removed all non-functional Ollama code
-- ✅ Simplified to cloud-only models (Mistral primary, OpenRouter secondary, OpenAI fallback)
-- ✅ Enhanced all Shopify Admin API tools with structured, vLLM/vSLM-friendly docstrings
-- ✅ Added comprehensive agent instructions with Shopify-specific context
-- ✅ Integrated Mistral AI as the primary model provider with native API support
-- ✅ Added full Shopify Storefront API support with separate credentials and testing
-- ✅ Implemented 2 Storefront API tools with intelligent routing
-- ✅ **Expanded Admin API to 35 tools with Phase 5A, 5B, 5C & 5D complete**
+### Completed Tools:
 
-**Phase 5A Achievements:**
-- ✅ **9 new tools added**: Product variants (create/update/delete), Inventory management (get levels/adjust), Collections (create/add products), Metafields (get/set)
-- ✅ **Tool count increased from 9 to 18** - 100% growth in Admin API capabilities
-- ✅ All tools follow Make.com-inspired patterns for automation readiness
-- ✅ Comprehensive docstrings with [Category] prefixes and usage examples
-- ✅ GraphQL-based implementation with proper error handling
-- ✅ Permission requirements documented for each tool
+**Marketing Events:**
+- ✅ `get_marketing_events` - List all marketing events with filtering
+- ✅ `get_marketing_event_by_id` - Retrieve specific event details and metrics
+- ✅ `create_marketing_event` - Log new campaign start with UTM parameters
+- ✅ `update_marketing_event` - Update event metrics, budget, and attribution data
+- ✅ `delete_marketing_event` - Remove marketing event from tracking
 
-**Phase 5B Achievements:**
-- ✅ **7 new tools added**: Fulfillment operations (create/get/update tracking), Order management (cancel/refund/note/tag)
-- ✅ **Tool count increased from 18 to 25** - 39% growth with critical order processing capabilities
-- ✅ Complete fulfillment workflow support with tracking integration
-- ✅ Comprehensive refund and cancellation functionality
-- ✅ Order tagging and note management for internal tracking
-- ✅ All tools have detailed docstrings with real-world usage examples
-- ✅ Proper error handling and session management
+**Implementation Notes**:
+- All tools follow [Marketing] category prefix convention
+- Comprehensive docstrings with real-world usage examples
+- Permission requirements documented (read_marketing_events, write_marketing_events)
+- Support for UTM parameters (campaign, source, medium)
+- Budget tracking and event type classification
+- Start/end date management for campaign tracking
 
-**Phase 5C Achievements:**
-- ✅ **5 new tools added**: Customer engagement (tag/remove tags), Customer metafields (get/set), Order search by email
-- ✅ **Tool count increased from 25 to 30** - 20% growth with advanced customer management
-- ✅ Complete customer segmentation support with tagging capabilities
-- ✅ Custom customer data storage via metafields (loyalty points, preferences)
-- ✅ Quick order lookup by customer email for support workflows
-- ✅ All tools have [Customer Management] or [Order Management] category prefixes
-- ✅ Comprehensive docstrings with real-world usage scenarios
+**Tool Count**: 69 → 74
 
-**Phase 5D Achievements:**
-- ✅ **5 new tools added**: Discount code management (create/list/update/delete), Gift card generation
-- ✅ **Tool count increased from 30 to 35** - 17% growth with complete promotions toolkit
-- ✅ Full promotional campaign support with programmatic discount creation
-- ✅ Gift card generation for customer rewards and giveaways
-- ✅ Discount lifecycle management (create → update → delete)
-- ✅ All tools have [Pricing & Promotions] category prefix
-- ✅ Comprehensive docstrings with real-world promotional use cases
-- ✅ **Phase 5 NOW COMPLETE** - All core Make.com-inspired tools implemented
+---
 
-**Make.com Integration Insights:**
-- Make.com's Shopify integration offers 20+ actions, 5+ triggers, and custom GraphQL/REST API calls
-- Most popular automations: Inventory sync, order notifications, customer segmentation, discount management
-- Key workflow patterns: Event-driven (webhooks) + scheduled (batch operations) + manual (on-demand)
-- Critical features for AI Store Manager: Variants, inventory, fulfillments, refunds, discounts, metafields
-- **All critical features now implemented in Phase 5 (35 Admin API tools)**
+## 🚢 Phase 13: Shipping Configuration (Tier 4A) - NEXT
+**Goal**: Manage shipping zones, rates, and carrier integrations
 
-**Next Phase:**
-Phase 6 will focus on event-driven automation with webhook subscriptions, real-time notifications, and rule-based workflow engine. This will transform the app from a reactive tool into a proactive automation platform.
+### Tasks:
+- [ ] Implement `get_shipping_zones` tool (list all shipping zones)
+- [ ] Implement `get_shipping_zone_by_id` tool (retrieve specific zone)
+- [ ] Implement `create_shipping_zone` tool (create new zone)
+- [ ] Implement `update_shipping_zone` tool (modify zone settings)
+- [ ] Implement `delete_shipping_zone` tool (remove zone)
+- [ ] Implement `get_shipping_rates` tool (list rates for zone)
+- [ ] Implement `create_shipping_rate` tool (add rate to zone)
+- [ ] Implement `update_shipping_rate` tool (modify rate)
+- [ ] Implement `delete_shipping_rate` tool (remove rate)
+- [ ] Add [Shipping] category prefix to all tools
+- [ ] Write comprehensive docstrings with usage examples
+- [ ] Add permission requirements (read_shipping, write_shipping)
+
+**Expected Output**: 9 new tools, total count: 74 → 83
+
+---
+
+## 🌍 Phase 14: Markets & Internationalization (Tier 4B)
+**Goal**: Configure international selling and multi-currency pricing
+
+### Tasks:
+- [ ] Implement `get_markets` tool (list all markets)
+- [ ] Implement `get_market_by_id` tool (retrieve specific market)
+- [ ] Implement `create_market` tool (create new market)
+- [ ] Implement `update_market` tool (modify market settings)
+- [ ] Implement `delete_market` tool (remove market)
+- [ ] Implement `get_market_catalogs` tool (list product catalogs by market)
+- [ ] Add [Markets] category prefix to all tools
+- [ ] Write comprehensive docstrings with usage examples
+- [ ] Add permission requirements (read_markets, write_markets)
+
+**Expected Output**: 6 new tools, total count: 83 → 89
+
+---
+
+## 🎨 Phase 15: Themes & Templates (Tier 4C)
+**Goal**: Manage theme files and storefront customization
+
+### Tasks:
+- [ ] Implement `get_themes` tool (list all themes)
+- [ ] Implement `get_theme_by_id` tool (retrieve specific theme)
+- [ ] Implement `get_theme_assets` tool (list theme files)
+- [ ] Implement `get_theme_asset` tool (retrieve specific asset)
+- [ ] Implement `update_theme_asset` tool (modify theme file)
+- [ ] Implement `delete_theme_asset` tool (remove theme file)
+- [ ] Add [Themes] category prefix to all tools
+- [ ] Write comprehensive docstrings with usage examples
+- [ ] Add permission requirements (read_themes, write_themes)
+
+**Expected Output**: 6 new tools, total count: 89 → 95
+
+---
+
+## 🌐 Phase 16: Translations & Localization (Tier 4D)
+**Goal**: Manage multi-language content and translations
+
+### Tasks:
+- [ ] Implement `get_translations` tool (list translations for resource)
+- [ ] Implement `create_translation` tool (add translation)
+- [ ] Implement `update_translation` tool (modify translation)
+- [ ] Implement `delete_translation` tool (remove translation)
+- [ ] Implement `get_locales` tool (list available shop locales)
+- [ ] Add [Translations] category prefix to all tools
+- [ ] Write comprehensive docstrings with usage examples
+- [ ] Add permission requirements (read_translations, write_translations, read_locales)
+
+**Expected Output**: 5 new tools, total count: 95 → 100
+
+---
+
+## 📜 Phase 17: Legal Policies (Tier 4E)
+**Goal**: Manage privacy policy, terms of service, and legal pages
+
+### Tasks:
+- [ ] Implement `get_shop_policies` tool (list all policies)
+- [ ] Implement `update_privacy_policy` tool (modify privacy policy)
+- [ ] Implement `update_terms_of_service` tool (modify TOS)
+- [ ] Implement `update_refund_policy` tool (modify refund policy)
+- [ ] Implement `update_shipping_policy` tool (modify shipping policy)
+- [ ] Add [Legal Policies] category prefix to all tools
+- [ ] Write comprehensive docstrings with usage examples
+- [ ] Add permission requirements (read_legal_policies, write_legal_policies)
+
+**Expected Output**: 5 new tools, total count: 100 → 105
+
+---
+
+## 🛒 Phase 18: Storefront API Expansion
+**Goal**: Add customer-facing checkout and cart operations
+
+### Tasks:
+- [ ] Implement `create_checkout` tool (initialize checkout session)
+- [ ] Implement `get_checkout` tool (retrieve checkout details)
+- [ ] Implement `update_checkout` tool (modify checkout)
+- [ ] Implement `complete_checkout` tool (finalize purchase)
+- [ ] Implement `apply_discount_to_checkout` tool (apply promo code)
+- [ ] Implement `create_customer_account` tool (register customer)
+- [ ] Implement `update_customer_account` tool (modify profile)
+- [ ] Implement `reset_customer_password` tool (initiate password reset)
+- [ ] Add [Storefront - Checkout] and [Storefront - Customers] prefixes
+- [ ] Write comprehensive docstrings with usage examples
+- [ ] Add permission requirements (unauthenticated_write_checkouts, unauthenticated_write_customers)
+
+**Expected Output**: 8 new tools, total count: 105 → 113
+
+---
+
+## 📊 Progress Summary
+
+### Current Status:
+- **Completed Phases**: 1-12 (Core + Draft Orders + Locations + Returns + Files + Reports + Content + Marketing)
+- **Tools Implemented**: 74/113 (65%)
+- **Remaining Phases**: 13-18 (6 phases)
+- **Remaining Tools**: 39 tools
+
+### Session Goals:
+- **Session 1 (Current)**: Phases 9-12 ✅ Achieved: 74 tools
+- **Session 2**: Phases 13-15 → Target: 95 tools
+- **Session 3**: Phases 16-18 → Target: 113 tools (100% coverage)
+
+---
+
+## 📝 Next Steps
+
+Phase 12 complete! Ready to move to Phase 13: Shipping Configuration (9 tools), Phase 14: Markets (6 tools), or Phase 15: Themes (6 tools).
+
+**Recommendation**: Continue with remaining Tier 4 phases in next session to reach 100% API coverage.
