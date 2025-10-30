@@ -21,7 +21,7 @@ class AIOrchestrator:
     async def get_best_model(self) -> MistralChat | OpenAIChat | OpenRouter | None:
         """Selects the best available model based on priority: OpenRouter -> Mistral -> OpenAI."""
         if self.settings.openrouter_api_key:
-            self.current_model_name = "OpenRouter (LongCat-Flash)"
+            self.current_model_name = "OpenRouter (LongCat-Flash-Chat)"
             logging.info(f"Using model: {self.current_model_name}")
             return OpenRouter(
                 id="meituan/longcat-flash-chat:free",
