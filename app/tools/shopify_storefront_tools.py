@@ -10,16 +10,16 @@ async def get_storefront_api_client() -> (
     tuple[httpx.AsyncClient, str] | tuple[None, None]
 ):
     """Creates an httpx client configured for the Shopify Storefront API."""
-    from app.states.settings_state import SettingsState
+    import os
 
-    temp_state = rx.State()
-    settings = await temp_state.get_state(SettingsState)
-    if not settings.is_shopify_storefront_token_set or not settings.shopify_store_url:
-        logging.error("Shopify Storefront credentials are not set.")
+    store_url = os.getenv("SHOPIFY_STORE_URL")
+    storefront_token = os.getenv("SHOPIFY_STOREFRONT_TOKEN")
+    if not storefront_token or not store_url:
+        logging.error("Shopify Storefront credentials are not set in environment.")
         return (None, None)
-    endpoint = f"https://{settings.shopify_store_url}/api/2024-04/graphql.json"
+    endpoint = f"https://{store_url}/api/2024-04/graphql.json"
     headers = {
-        "X-Shopify-Storefront-Access-Token": settings.shopify_storefront_token,
+        "X-Shopify-Storefront-Access-Token": storefront_token,
         "Content-Type": "application/json",
     }
     client = httpx.AsyncClient(headers=headers)
