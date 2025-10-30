@@ -19,8 +19,8 @@ class AIOrchestrator:
         self.current_model_name: str = ""
 
     async def get_best_model(self) -> MistralChat | OpenAIChat | OpenRouter | None:
-        """Selects the best available model based on priority: OpenRouter (LongCat) -> Mistral -> OpenRouter (Mistral) -> OpenAI."""
-        if self.settings.is_openrouter_key_set:
+        """Selects the best available model based on priority: OpenRouter -> Mistral -> OpenAI."""
+        if self.settings.openrouter_api_key:
             self.current_model_name = "OpenRouter (LongCat-Flash)"
             logging.info(f"Using model: {self.current_model_name}")
             return OpenRouter(
@@ -28,13 +28,13 @@ class AIOrchestrator:
                 api_key=self.settings.openrouter_api_key,
                 base_url="https://openrouter.ai/api/v1",
             )
-        if self.settings.is_mistral_key_set:
+        if self.settings.mistral_api_key:
             self.current_model_name = "Mistral (mistral-large-latest)"
             logging.info(f"Using model: {self.current_model_name}")
             return MistralChat(
                 id="mistral-large-latest", api_key=self.settings.mistral_api_key
             )
-        if self.settings.is_openai_key_set:
+        if self.settings.openai_api_key:
             self.current_model_name = "OpenAI (GPT-3.5 Turbo)"
             logging.info(f"Using model: {self.current_model_name}")
             return OpenAIChat(id="gpt-3.5-turbo", api_key=self.settings.openai_api_key)
