@@ -24,24 +24,18 @@ class AIOrchestrator:
     ) -> list[tuple[MistralChat | OpenAIChat | OpenRouter, str]]:
         """Returns a prioritized list of available fallback models."""
         models = []
-        if self.settings.openrouter_api_key:
+        if self.settings.openai_api_key:
             try:
                 models.append(
                     (
-                        OpenRouter(
-                            id="mistralai/ministral-8b",
-                            api_key=self.settings.openrouter_api_key,
-                            base_url="https://openrouter.ai/api/v1",
-                            default_headers={
-                                "HTTP-Referer": "http://localhost:3000",
-                                "X-Title": "Shopify AI Manager",
-                            },
+                        OpenAIChat(
+                            id="gpt-3.5-turbo", api_key=self.settings.openai_api_key
                         ),
-                        "OpenRouter (Ministral 8B)",
+                        "OpenAI (GPT-3.5 Turbo)",
                     )
                 )
             except Exception as e:
-                logging.exception(f"Could not initialize OpenRouter model: {e}")
+                logging.exception(f"Could not initialize OpenAI model: {e}")
         if self.settings.mistral_api_key:
             try:
                 models.append(
@@ -55,18 +49,24 @@ class AIOrchestrator:
                 )
             except Exception as e:
                 logging.exception(f"Could not initialize Mistral model: {e}")
-        if self.settings.openai_api_key:
+        if self.settings.openrouter_api_key:
             try:
                 models.append(
                     (
-                        OpenAIChat(
-                            id="gpt-3.5-turbo", api_key=self.settings.openai_api_key
+                        OpenRouter(
+                            id="mistralai/mixtral-8x7b",
+                            api_key=self.settings.openrouter_api_key,
+                            base_url="https://openrouter.ai/api/v1",
+                            default_headers={
+                                "HTTP-Referer": "http://localhost:3000",
+                                "X-Title": "Shopify AI Manager",
+                            },
                         ),
-                        "OpenAI (GPT-3.5 Turbo)",
+                        "OpenRouter (Mixtral 8x7B)",
                     )
                 )
             except Exception as e:
-                logging.exception(f"Could not initialize OpenAI model: {e}")
+                logging.exception(f"Could not initialize OpenRouter model: {e}")
         return models
 
 
@@ -81,7 +81,7 @@ class ChatState(rx.State):
     @rx.event
     async def on_load(self) -> None:
         """Initializes the agent when the page loads."""
-        await self._initialize_agent("")
+        pass
 
     async def _initialize_agent(self, query: str):
         """Initializes or re-initializes the agent based on the query."""
@@ -91,8 +91,12 @@ class ChatState(rx.State):
 
         settings = await self.get_state(SettingsState)
         orchestrator = AIOrchestrator(settings)
-        model = await orchestrator.get_best_model(query)
-        self.current_model_name = orchestrator.current_model_name
+        fallback_models = await orchestrator.get_fallback_models()
+        if not fallback_models:
+            self.current_model_name = "No model available"
+            return None
+        model, model_name = fallback_models[0]
+        self.current_model_name = model_name
         tools = [DuckDuckGoTools()]
         if settings.are_shopify_credentials_set:
             tools.append(ShopifyTools())
@@ -186,7 +190,50 @@ class ChatState(rx.State):
                     tools.append(ShopifyTools())
                 if settings.is_shopify_storefront_token_set:
                     tools.append(ShopifyStorefrontTools())
-                system_prompt = "..."
+                system_prompt = """
+                ⚠️ CRITICAL CONTEXT - READ FIRST ⚠️
+
+                YOU ARE ASSISTING A STORE MANAGER/OWNER, NOT A CUSTOMER.
+
+                The person you're talking to:
+                - ✅ IS: A Shopify store owner/manager/administrator  
+                - ❌ IS NOT: A customer shopping on the store
+                - ✅ HAS: Full admin access to ALL store data (orders, customers, products, etc.)
+                - ❌ SHOULD NOT: Ever be asked for customer ID, email, or personal identification
+
+                When the user says "my orders", "my products", "my customers":
+                - ✅ MEANS: The store's orders/products/customers (all of them)
+                - ❌ DOES NOT MEAN: Their personal customer account
+
+                ===== CORE INSTRUCTIONS =====
+
+                You are an expert Shopify AI Assistant for the store manager. Your primary goal is to help the manager run their store efficiently by using the provided tools. You are acting on behalf of the manager, not interacting with end customers.
+
+                **Your Role:**
+                - You are the manager's personal assistant. When the user says "my", "I", or "me", they are referring to themselves as the store manager.
+                - You must use the available tools to answer questions and perform actions related to the Shopify store's administration.
+
+                **Tool Usage Guidelines:**
+                - **Admin Tools (Default):** Use these for all internal management tasks. This includes looking up orders, products, customers, and performing actions like creating, updating, or deleting resources. For any query about store data (e.g., "show me the last order"), you should use an Admin tool.
+                - **Storefront Tools (`[Storefront]`):** Only use these when the user explicitly asks to see something from a *customer's perspective* (e.g., "what does a customer see on the homepage?").
+                - **DuckDuckGo:** Use for general knowledge questions that are not related to the Shopify store data.
+
+                **Example Interaction:**
+                User: "when was my last order placed and for how much was it for?"
+                Assistant's Thought Process:
+                1. The user is the store manager and is asking for the most recent order in the store.
+                2. I need to find a tool to get order information.
+                3. The `get_orders` tool seems appropriate. It can fetch recent orders.
+                4. I will call `get_orders(limit=1)` to get the very last order.
+                5. After getting the order details, I will present the date and price to the user.
+
+                **Important:**
+                - Never ask the user for their customer ID or email. You have direct access to the store's data through the tools.
+                - If a tool fails, clearly state the error and suggest a possible reason if available.
+                - Be concise and action-oriented in your responses.
+
+                ⚠️ REMEMBER: You are helping a STORE OWNER manage their BUSINESS, not a customer making a purchase. ⚠️
+                """
                 agent = Agent(
                     model=model,
                     tools=tools,
