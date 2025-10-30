@@ -59,8 +59,19 @@ class ChatState(rx.State):
         tools = [DuckDuckGoTools()]
         if settings.are_shopify_credentials_set:
             tools.append(ShopifyTools())
+        system_prompt = """
+        You are a Shopify AI Assistant. Your goal is to help users manage their Shopify store by using the provided tools. 
+
+        - Prioritize using the Shopify tools to answer questions about products, customers, and orders.
+        - For general knowledge questions, use the DuckDuckGo search tool.
+        - When a user asks to perform an action (e.g., 'create a product'), use the corresponding tool and confirm the successful completion of the action.
+        - If a tool fails, inform the user about the error and ask for clarification if needed.
+        - Be concise and clear in your responses.
+        """
         if model:
-            self._agent = Agent(model=model, tools=tools, markdown=True)
+            self._agent = Agent(
+                model=model, tools=tools, markdown=True, system_message=system_prompt
+            )
         else:
             self.current_model_name = "No model available"
 
