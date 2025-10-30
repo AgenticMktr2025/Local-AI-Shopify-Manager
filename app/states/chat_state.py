@@ -20,13 +20,13 @@ class AIOrchestrator:
         self.current_model_name: str = ""
 
     async def get_best_model(self) -> MistralChat | OpenAIChat | OpenRouter | None:
-        """Selects the best available model based on priority: OpenRouter (DeepSeek V3.1 -> LongCat-Flash-Chat) -> Mistral -> OpenAI."""
+        """Selects the best available model based on priority: OpenRouter (DeepSeek -> GPT-4o-mini) -> Mistral -> OpenAI."""
         if self.settings.openrouter_api_key:
             try:
-                self.current_model_name = "OpenRouter (DeepSeek V3.1)"
+                self.current_model_name = "OpenRouter (DeepSeek Chat)"
                 logging.info(f"Using model: {self.current_model_name}")
                 return OpenRouter(
-                    id="deepseek/deepseek-chat-v3.1:free",
+                    id="deepseek/deepseek-chat",
                     api_key=self.settings.openrouter_api_key,
                     base_url="https://openrouter.ai/api/v1",
                     default_headers={
@@ -38,10 +38,10 @@ class AIOrchestrator:
                 logging.exception(
                     f"Failed to initialize DeepSeek, falling back. Error: {e}"
                 )
-                self.current_model_name = "OpenRouter (LongCat-Flash-Chat)"
+                self.current_model_name = "OpenRouter (GPT-4o Mini)"
                 logging.info(f"Using model: {self.current_model_name}")
                 return OpenRouter(
-                    id="meituan/longcat-flash-chat:free",
+                    id="openai/gpt-4o-mini",
                     api_key=self.settings.openrouter_api_key,
                     base_url="https://openrouter.ai/api/v1",
                     default_headers={
