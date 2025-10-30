@@ -203,14 +203,14 @@ Based on Make.com's Shopify integration templates and automation library, the fo
 
 **Status**: ✅ COMPLETE
 
-### 5D: Pricing & Promotions Tools
-- [ ] **Create Discount Code**: Generate promo codes programmatically
-- [ ] **List Discount Codes**: View all active discount codes
-- [ ] **Update Discount Code**: Modify discount rules and expiry
-- [ ] **Delete Discount Code**: Remove expired or invalid codes
-- [ ] **Create Gift Card**: Generate gift cards with custom amounts
+### 5D: Pricing & Promotions Tools ✅
+- [x] **Create Basic Discount Code**: Generate percentage-based promo codes
+- [x] **Get Discount Codes**: List all discount code nodes
+- [x] **Update Basic Discount Code**: Modify discount properties
+- [x] **Delete Discount Code**: Remove expired codes
+- [x] **Create Gift Card**: Generate gift cards with custom amounts
 
-**Status**: ⏳ NEXT UP
+**Status**: ✅ COMPLETE
 
 ---
 
@@ -291,7 +291,7 @@ Based on Make.com's Shopify integration templates and automation library, the fo
   - Credential visibility toggles
   - Independent testing for each API type
 - **Shopify Integration**:
-  - **30 Admin API tools** for management operations (Product/Inventory/Customer/Order/Fulfillment)
+  - **35 Admin API tools** for management operations (Product/Inventory/Customer/Order/Fulfillment/Promotions)
   - **2 Storefront API tools** for customer-facing queries (Product Search/Details)
   - Dual API architecture with clear separation of concerns
   - GraphQL-based queries with proper authentication
@@ -319,21 +319,23 @@ Based on Make.com's Shopify integration templates and automation library, the fo
 | **Customers** | 8 (get, update, get-orders, tag, remove-tags, metafields, search-orders) | - |
 | **Orders** | 3 (get, get-by-id, update) | - |
 | **Fulfillment** | 7 (create, get, cancel, refund, note, tag, tracking) | - |
-| **Total** | **30 tools** | **2 tools** |
+| **Promotions** | 5 (discount codes: create, list, update, delete; gift cards: create) | - |
+| **Total** | **35 tools** | **2 tools** |
 
 ### 🚀 Make.com Integration Priorities
 
 Based on Make.com's most popular Shopify templates, these features should be prioritized:
 
-**HIGH PRIORITY** (Phase 5):
+**HIGH PRIORITY** (Phase 5): ✅ COMPLETE
 1. ✅ Product Variants (create, update, delete)
 2. ✅ Inventory Management (adjust levels, track across locations)
 3. ✅ Fulfillment Operations (create fulfillments, update tracking)
 4. ✅ Refund Processing (issue refunds with reasons)
-5. ⏳ Discount Code Management (create, list, update, delete)
+5. ✅ Discount Code Management (create, list, update, delete)
 6. ✅ Collections Management (create, add products)
 7. ✅ Metafields (product, customer, order metadata)
 8. ✅ Customer Tagging & Segmentation
+9. ✅ Gift Card Generation
 
 **MEDIUM PRIORITY** (Phase 6):
 1. Webhook Subscriptions (real-time event monitoring)
@@ -351,7 +353,7 @@ Based on Make.com's most popular Shopify templates, these features should be pri
 
 ## 📝 Implementation Notes
 
-**Phase 1-5C Summary:**
+**Phase 1-5D Summary:**
 - ✅ Removed all non-functional Ollama code
 - ✅ Simplified to cloud-only models (Mistral primary, OpenRouter secondary, OpenAI fallback)
 - ✅ Enhanced all Shopify Admin API tools with structured, vLLM/vSLM-friendly docstrings
@@ -359,7 +361,7 @@ Based on Make.com's most popular Shopify templates, these features should be pri
 - ✅ Integrated Mistral AI as the primary model provider with native API support
 - ✅ Added full Shopify Storefront API support with separate credentials and testing
 - ✅ Implemented 2 Storefront API tools with intelligent routing
-- ✅ **Expanded Admin API to 30 tools with Phase 5A, 5B & 5C complete**
+- ✅ **Expanded Admin API to 35 tools with Phase 5A, 5B, 5C & 5D complete**
 
 **Phase 5A Achievements:**
 - ✅ **9 new tools added**: Product variants (create/update/delete), Inventory management (get levels/adjust), Collections (create/add products), Metafields (get/set)
@@ -387,11 +389,22 @@ Based on Make.com's most popular Shopify templates, these features should be pri
 - ✅ All tools have [Customer Management] or [Order Management] category prefixes
 - ✅ Comprehensive docstrings with real-world usage scenarios
 
+**Phase 5D Achievements:**
+- ✅ **5 new tools added**: Discount code management (create/list/update/delete), Gift card generation
+- ✅ **Tool count increased from 30 to 35** - 17% growth with complete promotions toolkit
+- ✅ Full promotional campaign support with programmatic discount creation
+- ✅ Gift card generation for customer rewards and giveaways
+- ✅ Discount lifecycle management (create → update → delete)
+- ✅ All tools have [Pricing & Promotions] category prefix
+- ✅ Comprehensive docstrings with real-world promotional use cases
+- ✅ **Phase 5 NOW COMPLETE** - All core Make.com-inspired tools implemented
+
 **Make.com Integration Insights:**
 - Make.com's Shopify integration offers 20+ actions, 5+ triggers, and custom GraphQL/REST API calls
 - Most popular automations: Inventory sync, order notifications, customer segmentation, discount management
 - Key workflow patterns: Event-driven (webhooks) + scheduled (batch operations) + manual (on-demand)
 - Critical features for AI Store Manager: Variants, inventory, fulfillments, refunds, discounts, metafields
+- **All critical features now implemented in Phase 5 (35 Admin API tools)**
 
 **Next Phase:**
-Phase 5D will add 5 Pricing & Promotions tools (discount codes: create/list/update/delete, gift cards). This will complete the core Make.com-inspired automation foundation with 35+ Admin API tools total.
+Phase 6 will focus on event-driven automation with webhook subscriptions, real-time notifications, and rule-based workflow engine. This will transform the app from a reactive tool into a proactive automation platform.

@@ -61,6 +61,11 @@ class ShopifyTools(Toolkit):
             self.get_customer_metafields,
             self.set_customer_metafield,
             self.search_orders_by_customer_email,
+            self.create_basic_discount_code,
+            self.get_discount_codes,
+            self.update_basic_discount_code,
+            self.delete_discount_code,
+            self.create_gift_card,
         ]
         super().__init__(name="shopify", tools=tools, **kwargs)
 
@@ -1416,3 +1421,238 @@ class ShopifyTools(Toolkit):
             )
         graphql_query = f'\n        {{\n          order(id: "{order_id}") {{\n            fulfillmentOrders(first: {limit}) {{\n              edges {{\n                node {{\n                  id\n                  status\n                  requestStatus\n                  supportedActions {{\n                    action\n                  }}\n                  lineItems(first: 10) {{\n                    edges {{\n                        node {{\n                            id\n                            quantity\n                        }}\n                    }}\n                  }}\n                }}\n              }}\n            }}\n          }}\n        }}\n        '
         return self._execute_query("get_fulfillment_orders", graphql_query)
+
+    async def create_basic_discount_code(
+        self, code: str, percentage: float, applies_to_all_products: bool = True
+    ) -> str:
+        """
+        [Pricing & Promotions] - Create a new basic discount code.
+
+        Description: Creates a simple percentage-based discount code. For more complex discounts, use the Shopify Admin.
+
+        Required Permissions: write_discounts
+
+        Example Usage:
+        - "Create a 10% discount code 'SAVE10' for all products." -> create_basic_discount_code(code="SAVE10", percentage=10, applies_to_all_products=True)
+
+        Args:
+            code (str): The discount code (e.g., 'SUMMER2024').
+            percentage (float): The discount percentage (e.g., 10 for 10%).
+            applies_to_all_products (bool): If true, the discount applies to all products.
+
+        Returns:
+            JSON string with the created discount code's data or an error message.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "create_basic_discount_code",
+                }
+            )
+        discount_input = {
+            "code": code,
+            "customerSelection": {"allCustomers": True},
+            "value": {"percentageValue": percentage / 100},
+            "appliesTo": {"allProducts": applies_to_all_products},
+            "startsAt": "2024-01-01T00:00:00Z",
+        }
+        graphql_mutation = """
+        mutation discountCodeBasicCreate($basicCodeDiscount: DiscountCodeBasicInput!) {
+          discountCodeBasicCreate(basicCodeDiscount: $basicCodeDiscount) {
+            codeDiscountNode {
+              codeDiscount {
+                ... on DiscountCodeBasic {
+                  title
+                  summary
+                  status
+                }
+              }
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        return self._execute_query(
+            "discountCodeBasicCreate",
+            graphql_mutation,
+            variables={"basicCodeDiscount": discount_input},
+        )
+
+    async def get_discount_codes(self, limit: int = 25) -> str:
+        """
+        [Pricing & Promotions] - Get a list of discount code nodes.
+
+        Description: Retrieves a list of all discount code nodes, which contain details about discounts.
+
+        Required Permissions: read_discounts
+
+        Example Usage:
+        - "Show me all available discount codes." -> get_discount_codes()
+
+        Args:
+            limit (int): The maximum number of discount nodes to return.
+
+        Returns:
+            JSON string with a list of discount code nodes.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "get_discount_codes",
+                }
+            )
+        graphql_query = f"\n        {{\n          codeDiscountNodes(first: {limit}) {{\n            edges {{\n              node {{\n                id\n                codeDiscount {{\n                  ... on DiscountCodeBasic {{\n                    title\n                    summary\n                    status\n                  }}\n                }}\n              }}\n            }}\n          }}\n        }}\n        "
+        return self._execute_query("get_discount_codes", graphql_query)
+
+    async def update_basic_discount_code(
+        self, discount_node_id: str, new_code: Optional[str] = None
+    ) -> str:
+        """
+        [Pricing & Promotions] - Update a basic discount code.
+
+        Description: Updates properties of an existing basic discount, like its code.
+
+        Required Permissions: write_discounts
+
+        Example Usage:
+        - "Update discount 'gid://.../CodeDiscountNode/123' to use the code 'NEWCODE'." -> update_basic_discount_code(discount_node_id="gid://...", new_code="NEWCODE")
+
+        Args:
+            discount_node_id (str): The GraphQL ID of the code discount node to update.
+            new_code (Optional[str]): The new discount code string.
+
+        Returns:
+            JSON string with the updated discount code data or an error message.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "update_basic_discount_code",
+                }
+            )
+        update_input = {}
+        if new_code:
+            update_input["code"] = new_code
+        graphql_mutation = """
+        mutation discountCodeBasicUpdate($id: ID!, $basicCodeDiscount: DiscountCodeBasicInput!) {
+          discountCodeBasicUpdate(id: $id, basicCodeDiscount: $basicCodeDiscount) {
+            codeDiscountNode {
+              id
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        variables = {"id": discount_node_id, "basicCodeDiscount": update_input}
+        return self._execute_query(
+            "discountCodeBasicUpdate", graphql_mutation, variables=variables
+        )
+
+    async def delete_discount_code(self, discount_id: str) -> str:
+        """
+        [Pricing & Promotions] - Delete a discount code.
+
+        Description: Deactivates and archives a discount code, effectively deleting it.
+
+        Required Permissions: write_discounts
+
+        Example Usage:
+        - "Delete the discount with ID 'gid://.../PriceRule/123'." -> delete_discount_code(discount_id="gid://...")
+
+        Args:
+            discount_id (str): The GraphQL ID of the discount (PriceRule) to delete.
+
+        Returns:
+            JSON string confirming the deletion or an error message.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "delete_discount_code",
+                }
+            )
+        graphql_mutation = """
+        mutation discountDelete($id: ID!) {
+          discountDelete(id: $id) {
+            deletedDiscountId
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        return self._execute_query(
+            "discountDelete", graphql_mutation, variables={"id": discount_id}
+        )
+
+    async def create_gift_card(
+        self, initial_value: float, note: Optional[str] = None
+    ) -> str:
+        """
+        [Pricing & Promotions] - Create a new gift card.
+
+        Description: Issues a new gift card with a specified initial value.
+
+        Required Permissions: write_gift_cards
+
+        Example Usage:
+        - "Create a $50 gift card for a customer giveaway." -> create_gift_card(initial_value=50.00, note="Giveaway winner")
+
+        Args:
+            initial_value (float): The initial value of the gift card.
+            note (Optional[str]): An internal note for the gift card.
+
+        Returns:
+            JSON string with the new gift card's data, including the redeem code.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "create_gift_card",
+                }
+            )
+        input_vars = {"initialValue": str(initial_value)}
+        if note:
+            input_vars["note"] = note
+        graphql_mutation = """
+        mutation giftCardCreate($input: GiftCardCreateInput!) {
+          giftCardCreate(input: $input) {
+            giftCard {
+              id
+              balance {
+                amount
+              }
+              code
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        return self._execute_query(
+            "giftCardCreate", graphql_mutation, variables={"input": input_vars}
+        )
