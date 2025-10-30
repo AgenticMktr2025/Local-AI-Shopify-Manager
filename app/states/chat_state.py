@@ -43,7 +43,7 @@ class AIOrchestrator:
     async def get_best_model(self) -> OpenAIChat | Ollama | OpenRouter | None:
         """Selects the best available model based on priority and availability."""
         if await self._is_ollama_available():
-            return Ollama(id="gemma2")
+            return Ollama(id="phi3:mini")
         if self.settings.openrouter_api_key:
             return OpenRouter(
                 id="mistralai/mistral-7b-instruct",
