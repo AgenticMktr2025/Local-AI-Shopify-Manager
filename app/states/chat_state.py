@@ -29,11 +29,13 @@ class AIOrchestrator:
         )
         if self.settings.openrouter_api_key:
             try:
-                model_id = "deepseek/deepseek-chat"
-                self.current_model_name = "OpenRouter (DeepSeek Chat)"
+                model_id = "mistralai/mistral-8b-instruct"
+                self.current_model_name = "OpenRouter (Mistral 8B Instruct)"
                 if is_research_query:
                     model_id = "alibaba/tongyi-deepresearch-30b-a3b:free"
                     self.current_model_name = "OpenRouter (Tongyi DeepResearch)"
+                else:
+                    pass
                 logging.info(f"Using model: {self.current_model_name}")
                 return OpenRouter(
                     id=model_id,
@@ -48,10 +50,10 @@ class AIOrchestrator:
                 logging.exception(
                     f"Failed to initialize primary OpenRouter model, falling back. Error: {e}"
                 )
-                self.current_model_name = "OpenRouter (GPT-4o Mini)"
-                logging.info(f"Using model: {self.current_model_name}")
+                self.current_model_name = "OpenRouter (Longcat 70B)"
+                logging.info(f"Using fallback model: {self.current_model_name}")
                 return OpenRouter(
-                    id="openai/gpt-4o-mini",
+                    id="recursal/longcat-70b-instruct",
                     api_key=self.settings.openrouter_api_key,
                     base_url="https://openrouter.ai/api/v1",
                     default_headers={
