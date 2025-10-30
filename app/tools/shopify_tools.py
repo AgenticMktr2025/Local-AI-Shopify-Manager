@@ -6,17 +6,12 @@ from agno.tools.toolkit import Toolkit
 from typing import Optional, Literal
 
 
-async def get_shopify_session() -> shopify.Session | None:
+async def get_shopify_session(
+    store_url: str, access_token: str
+) -> shopify.Session | None:
     """Creates and activates a Shopify API session."""
-    from app.states.settings_state import SettingsState
-
-    settings = rx.State.get_state(SettingsState)
-    if not settings:
-        settings = SettingsState()
-    store_url = settings.shopify_store_url
-    access_token = settings.shopify_access_token
-    if ~store_url | ~access_token:
-        logging.error("Shopify credentials are not set in SettingsState.")
+    if not store_url or not access_token:
+        logging.error("Shopify credentials were not provided.")
         return None
     try:
         session = shopify.Session(store_url, "2024-04", access_token)
@@ -30,7 +25,9 @@ async def get_shopify_session() -> shopify.Session | None:
 class ShopifyTools(Toolkit):
     """A toolkit for interacting with the Shopify Admin API using GraphQL."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, store_url: str, access_token: str, **kwargs):
+        self.store_url = store_url
+        self.access_token = access_token
         tools: list = [
             self.get_products,
             self.get_product_by_id,
@@ -179,7 +176,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with a list of products including id, title, handle, status, and inventory.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -209,7 +206,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with the product's details, including description, vendor, and type.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -251,7 +248,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with the new product's ID or an error message.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -310,7 +307,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with the new variant's ID or an error message.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -363,7 +360,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with the updated variant data or an error message.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -414,7 +411,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with the ID of the deleted variant or an error message.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -459,7 +456,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with inventory level details.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -493,7 +490,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with the updated inventory level or an error message.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -546,7 +543,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with the new collection's ID or an error message.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -596,7 +593,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with the updated collection or an error message.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -642,7 +639,7 @@ class ShopifyTools(Toolkit):
                 Returns:
                     JSON string with a list of metafields or an error message.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -682,7 +679,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with the created/updated metafield or an error message.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -740,7 +737,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with customer data including name, email, and phone.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -770,7 +767,7 @@ class ShopifyTools(Toolkit):
         Returns:
             A JSON string with the customer's orders or an error message.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -800,7 +797,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with the updated customer data or an error message.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -861,7 +858,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with a list of orders.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -891,7 +888,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with order details.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -921,7 +918,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with the updated order data.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -972,7 +969,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string confirming the cancellation or an error message.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -1026,7 +1023,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with the new fulfillment's ID.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -1081,7 +1078,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with the updated fulfillment details.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -1137,7 +1134,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with the created refund's details.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -1182,7 +1179,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: read_draft_orders
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1196,7 +1193,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: read_draft_orders
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1212,7 +1209,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: write_draft_orders
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1236,7 +1233,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: write_draft_orders
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1262,7 +1259,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: write_draft_orders
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1285,7 +1282,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: write_draft_orders
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1308,7 +1305,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: write_draft_orders
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1331,7 +1328,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: write_discounts
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1364,7 +1361,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: read_discounts
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1378,7 +1375,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: write_discounts
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1403,7 +1400,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: write_discounts
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1428,7 +1425,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: write_gift_cards
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1452,7 +1449,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: read_locations
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1466,7 +1463,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: read_locations
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1480,7 +1477,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: write_locations
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1503,7 +1500,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: write_locations
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1526,7 +1523,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: read_returns
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1542,7 +1539,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: read_returns
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1556,7 +1553,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: write_returns
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1582,7 +1579,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: write_returns
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1605,7 +1602,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: write_returns
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1630,7 +1627,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: write_returns
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1653,7 +1650,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: write_files
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1676,7 +1673,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: read_files
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1691,7 +1688,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: write_files
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1714,7 +1711,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: write_files
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1737,7 +1734,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: read_reports
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1751,7 +1748,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: read_reports
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1765,7 +1762,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: read_content
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1781,7 +1778,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: read_content
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1795,7 +1792,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: read_content
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1809,7 +1806,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: write_content
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1838,7 +1835,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: write_content
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1863,7 +1860,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: write_content
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1886,7 +1883,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: read_content
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1902,7 +1899,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: read_content
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1916,7 +1913,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: write_content
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1940,7 +1937,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: write_content
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1965,7 +1962,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: write_content
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -1988,7 +1985,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: read_marketing
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -2002,7 +1999,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: read_marketing
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -2016,7 +2013,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: write_marketing
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -2041,7 +2038,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: write_marketing
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -2066,7 +2063,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: write_marketing
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -2089,7 +2086,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: read_shipping
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -2105,7 +2102,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: read_shipping
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -2121,7 +2118,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: write_shipping
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -2140,7 +2137,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: write_shipping
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -2161,7 +2158,7 @@ class ShopifyTools(Toolkit):
 
         Required Permissions: write_shipping
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {"success": False, "error": "Shopify session not available."}
@@ -2234,7 +2231,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with the body content and type for each policy.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -2273,7 +2270,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with the updated policy details or an error message.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -2334,7 +2331,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with a list of markets.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -2363,7 +2360,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with market details.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -2393,7 +2390,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with the new market's ID.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -2439,7 +2436,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with updated market data.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -2491,7 +2488,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with the ID of the deleted market.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -2532,7 +2529,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with catalog details.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -2561,7 +2558,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with a list of themes.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -2590,7 +2587,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with theme details.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -2620,7 +2617,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with a list of assets.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -2662,7 +2659,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with the asset's content.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -2706,7 +2703,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with the updated asset's key.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -2751,7 +2748,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string confirming deletion.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -2798,7 +2795,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with a list of translations.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -2832,7 +2829,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with the new translation's details.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -2892,7 +2889,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string confirming deletion.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {
@@ -2933,7 +2930,7 @@ class ShopifyTools(Toolkit):
         Returns:
             JSON string with a list of locales.
         """
-        session = await get_shopify_session()
+        session = await get_shopify_session(self.store_url, self.access_token)
         if not session:
             return json.dumps(
                 {

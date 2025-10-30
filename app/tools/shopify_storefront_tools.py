@@ -6,19 +6,12 @@ from agno.tools.toolkit import Toolkit
 from typing import Optional
 
 
-async def get_storefront_api_client() -> (
-    tuple[httpx.AsyncClient, str] | tuple[None, None]
-):
+async def get_storefront_api_client(
+    store_url: str, storefront_token: str
+) -> tuple[httpx.AsyncClient, str] | tuple[None, None]:
     """Creates an httpx client configured for the Shopify Storefront API."""
-    from app.states.settings_state import SettingsState
-
-    settings = rx.State.get_state(SettingsState)
-    if not settings:
-        settings = SettingsState()
-    store_url = settings.shopify_store_url
-    storefront_token = settings.shopify_storefront_token
-    if ~storefront_token | ~store_url:
-        logging.error("Shopify Storefront credentials are not set in SettingsState.")
+    if not store_url or not storefront_token:
+        logging.error("Shopify Storefront credentials were not provided.")
         return (None, None)
     endpoint = f"https://{store_url}/api/2024-04/graphql.json"
     headers = {
@@ -32,7 +25,9 @@ async def get_storefront_api_client() -> (
 class ShopifyStorefrontTools(Toolkit):
     """A toolkit for interacting with the Shopify Storefront API."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, store_url: str, storefront_token: str, **kwargs):
+        self.store_url = store_url
+        self.storefront_token = storefront_token
         tools: list = [
             self.search_products,
             self.get_product_by_handle,
@@ -51,7 +46,9 @@ class ShopifyStorefrontTools(Toolkit):
         self, tool_name: str, query: str, variables: Optional[dict] = None
     ) -> str:
         """Executes a GraphQL query against the Storefront API."""
-        client, endpoint = await get_storefront_api_client()
+        client, endpoint = await get_storefront_api_client(
+            self.store_url, self.storefront_token
+        )
         if not client or not endpoint:
             return json.dumps(
                 {

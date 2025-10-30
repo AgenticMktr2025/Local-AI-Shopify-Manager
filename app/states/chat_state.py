@@ -14,7 +14,7 @@ from agno.exceptions import ModelProviderError
 class AIOrchestrator:
     """Manages AI model selection and fallback logic for cloud-based models."""
 
-    def __init__(self, settings_state: "rx.State"):
+    def __init__(self, settings_state: "SettingsState"):
         self.settings = settings_state
         self.client_cache: dict[str, OpenAIChat | OpenRouter | MistralChat] = {}
         self.current_model_name: str = ""
@@ -99,9 +99,19 @@ class ChatState(rx.State):
         self.current_model_name = model_name
         tools = [DuckDuckGoTools()]
         if settings.are_shopify_credentials_set:
-            tools.append(ShopifyTools())
+            tools.append(
+                ShopifyTools(
+                    store_url=settings.shopify_store_url,
+                    access_token=settings.shopify_access_token,
+                )
+            )
         if settings.is_shopify_storefront_token_set:
-            tools.append(ShopifyStorefrontTools())
+            tools.append(
+                ShopifyStorefrontTools(
+                    store_url=settings.shopify_store_url,
+                    storefront_token=settings.shopify_storefront_token,
+                )
+            )
         system_prompt = """
         ⚠️ CRITICAL CONTEXT - READ FIRST ⚠️
 
@@ -187,9 +197,19 @@ class ChatState(rx.State):
                 logging.info(f"Attempt {i + 1}/{MAX_RETRIES}: Using model {model_name}")
                 tools = [DuckDuckGoTools()]
                 if settings.are_shopify_credentials_set:
-                    tools.append(ShopifyTools())
+                    tools.append(
+                        ShopifyTools(
+                            store_url=settings.shopify_store_url,
+                            access_token=settings.shopify_access_token,
+                        )
+                    )
                 if settings.is_shopify_storefront_token_set:
-                    tools.append(ShopifyStorefrontTools())
+                    tools.append(
+                        ShopifyStorefrontTools(
+                            store_url=settings.shopify_store_url,
+                            storefront_token=settings.shopify_storefront_token,
+                        )
+                    )
                 system_prompt = """
                 ⚠️ CRITICAL CONTEXT - READ FIRST ⚠️
 
