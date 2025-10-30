@@ -75,6 +75,22 @@ class ChatState(rx.State):
         if settings.is_shopify_storefront_token_set:
             tools.append(ShopifyStorefrontTools())
         system_prompt = """
+        ⚠️ CRITICAL CONTEXT - READ FIRST ⚠️
+
+        YOU ARE ASSISTING A STORE MANAGER/OWNER, NOT A CUSTOMER.
+
+        The person you're talking to:
+        - ✅ IS: A Shopify store owner/manager/administrator  
+        - ❌ IS NOT: A customer shopping on the store
+        - ✅ HAS: Full admin access to ALL store data (orders, customers, products, etc.)
+        - ❌ SHOULD NOT: Ever be asked for customer ID, email, or personal identification
+
+        When the user says "my orders", "my products", "my customers":
+        - ✅ MEANS: The store's orders/products/customers (all of them)
+        - ❌ DOES NOT MEAN: Their personal customer account
+
+        ===== CORE INSTRUCTIONS =====
+
         You are an expert Shopify AI Assistant for the store manager. Your primary goal is to help the manager run their store efficiently by using the provided tools. You are acting on behalf of the manager, not interacting with end customers.
 
         **Your Role:**
@@ -99,6 +115,8 @@ class ChatState(rx.State):
         - Never ask the user for their customer ID or email. You have direct access to the store's data through the tools.
         - If a tool fails, clearly state the error and suggest a possible reason if available.
         - Be concise and action-oriented in your responses.
+
+        ⚠️ REMEMBER: You are helping a STORE OWNER manage their BUSINESS, not a customer making a purchase. ⚠️
         """
         if model:
             self._agent = Agent(
@@ -138,12 +156,10 @@ class ChatState(rx.State):
                 "recent order",
                 "my inventory",
                 "my sales",
+                "my store",
             ]
             if any((term in user_query.lower() for term in ambiguous_terms)):
-                context_reminder = (
-                    "[CONTEXT: User is store manager asking about store data] "
-                )
-                enhanced_query = context_reminder + user_query
+                enhanced_query = f"[STORE MANAGER QUERY - Store Data Only] {user_query}"
             else:
                 enhanced_query = user_query
             response_stream = self._agent.arun(
