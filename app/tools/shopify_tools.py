@@ -8,12 +8,15 @@ from typing import Optional, Literal
 
 async def get_shopify_session() -> shopify.Session | None:
     """Creates and activates a Shopify API session."""
-    import os
+    from app.states.settings_state import SettingsState
 
-    store_url = os.getenv("SHOPIFY_STORE_URL")
-    access_token = os.getenv("SHOPIFY_ACCESS_TOKEN")
-    if not store_url or not access_token:
-        logging.error("Shopify credentials are not set in environment.")
+    settings = rx.State.get_state(SettingsState)
+    if not settings:
+        settings = SettingsState()
+    store_url = settings.shopify_store_url
+    access_token = settings.shopify_access_token
+    if ~store_url | ~access_token:
+        logging.error("Shopify credentials are not set in SettingsState.")
         return None
     try:
         session = shopify.Session(store_url, "2024-04", access_token)

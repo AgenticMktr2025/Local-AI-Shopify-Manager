@@ -24,18 +24,6 @@ class AIOrchestrator:
     ) -> list[tuple[MistralChat | OpenAIChat | OpenRouter, str]]:
         """Returns a prioritized list of available fallback models."""
         models = []
-        if self.settings.openai_api_key:
-            try:
-                models.append(
-                    (
-                        OpenAIChat(
-                            id="gpt-3.5-turbo", api_key=self.settings.openai_api_key
-                        ),
-                        "OpenAI (GPT-3.5 Turbo)",
-                    )
-                )
-            except Exception as e:
-                logging.exception(f"Could not initialize OpenAI model: {e}")
         if self.settings.mistral_api_key:
             try:
                 models.append(
@@ -67,6 +55,18 @@ class AIOrchestrator:
                 )
             except Exception as e:
                 logging.exception(f"Could not initialize OpenRouter model: {e}")
+        if self.settings.openai_api_key:
+            try:
+                models.append(
+                    (
+                        OpenAIChat(
+                            id="gpt-3.5-turbo", api_key=self.settings.openai_api_key
+                        ),
+                        "OpenAI (GPT-3.5 Turbo)",
+                    )
+                )
+            except Exception as e:
+                logging.exception(f"Could not initialize OpenAI model: {e}")
         return models
 
 
