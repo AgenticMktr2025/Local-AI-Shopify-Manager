@@ -22,10 +22,10 @@ class AIOrchestrator:
     async def get_best_model(self) -> MistralChat | OpenAIChat | OpenRouter | None:
         """Selects the best available model based on priority: OpenRouter -> Mistral -> OpenAI."""
         if self.settings.openrouter_api_key:
-            self.current_model_name = "OpenRouter (Longcat/Deepseek)"
+            self.current_model_name = "OpenRouter (Deepseek)"
             logging.info(f"Using model: {self.current_model_name}")
             return OpenRouter(
-                id=["meituan/longcat-32k-16b", "deepseek/deepseek-chat"],
+                id="deepseek/deepseek-chat",
                 api_key=self.settings.openrouter_api_key,
                 base_url="https://openrouter.ai/api/v1",
             )
