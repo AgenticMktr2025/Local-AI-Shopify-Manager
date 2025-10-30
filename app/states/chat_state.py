@@ -28,6 +28,10 @@ class AIOrchestrator:
                 id="deepseek/deepseek-chat",
                 api_key=self.settings.openrouter_api_key,
                 base_url="https://openrouter.ai/api/v1",
+                default_headers={
+                    "HTTP-Referer": "http://localhost:3000",
+                    "X-Title": "Shopify AI Manager",
+                },
             )
         if self.settings.mistral_api_key:
             self.current_model_name = "Mistral (mistral-large-latest)"

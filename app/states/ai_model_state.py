@@ -29,13 +29,19 @@ class AIModelState(rx.State):
                 "model": "openai",
                 "error": "API key is not set.",
             }
-            return
         try:
-            client = openai.AsyncOpenAI(api_key=api_key)
+            client = openai.AsyncOpenAI(
+                base_url="https://openrouter.ai/api/v1",
+                api_key=api_key,
+                default_headers={
+                    "HTTP-Referer": "http://localhost:3000",
+                    "X-Title": "Shopify AI Manager",
+                },
+            )
             await client.models.list()
-            self.openai_test_result = {
+            self.openrouter_test_result = {
                 "success": True,
-                "model": "openai",
+                "model": "openrouter",
                 "error": None,
             }
         except Exception as e:
@@ -56,7 +62,12 @@ class AIModelState(rx.State):
             return
         try:
             client = openai.AsyncOpenAI(
-                base_url="https://openrouter.ai/api/v1", api_key=api_key
+                base_url="https://openrouter.ai/api/v1",
+                api_key=api_key,
+                default_headers={
+                    "HTTP-Referer": "http://localhost:3000",
+                    "X-Title": "Shopify AI Manager",
+                },
             )
             await client.models.list()
             self.openrouter_test_result = {
