@@ -19,14 +19,24 @@ class AIOrchestrator:
         self.client_cache: dict[str, OpenAIChat | OpenRouter] = {}
         self.current_model_name: str = ""
 
-    async def get_best_model(self) -> MistralChat | OpenAIChat | OpenRouter | None:
-        """Selects the best available model based on priority: OpenRouter (DeepSeek -> GPT-4o-mini) -> Mistral -> OpenAI."""
+    async def get_best_model(
+        self, query: str = ""
+    ) -> MistralChat | OpenAIChat | OpenRouter | None:
+        """Selects the best available model based on priority and query type."""
+        deep_research_keywords = ["research", "deep dive", "analyze", "report on"]
+        is_research_query = any(
+            (keyword in query.lower() for keyword in deep_research_keywords)
+        )
         if self.settings.openrouter_api_key:
             try:
+                model_id = "deepseek/deepseek-chat"
                 self.current_model_name = "OpenRouter (DeepSeek Chat)"
+                if is_research_query:
+                    model_id = "alibaba/tongyi-deepresearch-30b-a3b:free"
+                    self.current_model_name = "OpenRouter (Tongyi DeepResearch)"
                 logging.info(f"Using model: {self.current_model_name}")
                 return OpenRouter(
-                    id="deepseek/deepseek-chat",
+                    id=model_id,
                     api_key=self.settings.openrouter_api_key,
                     base_url="https://openrouter.ai/api/v1",
                     default_headers={
@@ -36,7 +46,7 @@ class AIOrchestrator:
                 )
             except Exception as e:
                 logging.exception(
-                    f"Failed to initialize DeepSeek, falling back. Error: {e}"
+                    f"Failed to initialize primary OpenRouter model, falling back. Error: {e}"
                 )
                 self.current_model_name = "OpenRouter (GPT-4o Mini)"
                 logging.info(f"Using model: {self.current_model_name}")
@@ -77,13 +87,17 @@ class ChatState(rx.State):
     @rx.event
     async def on_load(self) -> None:
         """Initializes the agent when the page loads."""
+        await self._initialize_agent("")
+
+    async def _initialize_agent(self, query: str):
+        """Initializes or re-initializes the agent based on the query."""
         from app.states.settings_state import SettingsState
         from app.tools.shopify_tools import ShopifyTools
         from app.tools.shopify_storefront_tools import ShopifyStorefrontTools
 
         settings = await self.get_state(SettingsState)
         orchestrator = AIOrchestrator(settings)
-        model = await orchestrator.get_best_model()
+        model = await orchestrator.get_best_model(query)
         self.current_model_name = orchestrator.current_model_name
         tools = [DuckDuckGoTools()]
         if settings.are_shopify_credentials_set:
@@ -148,16 +162,15 @@ class ChatState(rx.State):
         if not question or self.is_processing:
             return
         yield
+        await self._initialize_agent(question)
         if not self._agent:
-            await self.on_load()
-            if not self._agent:
-                self.messages.append(
-                    {
-                        "role": "assistant",
-                        "content": "No AI models are available. Please configure API keys in settings.",
-                    }
-                )
-                return
+            self.messages.append(
+                {
+                    "role": "assistant",
+                    "content": "No AI models are available. Please configure API keys in settings.",
+                }
+            )
+            return
         self.is_processing = True
         self.messages.append({"role": "user", "content": question})
         yield
@@ -198,7 +211,7 @@ class ChatState(rx.State):
             logging.exception(f"Model provider error during agent execution: {e}")
             if assistant_message_initialized:
                 self.messages.pop()
-            await self.on_load()
+            await self._initialize_agent(question)
             self.messages.append(
                 {
                     "role": "assistant",
