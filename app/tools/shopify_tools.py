@@ -105,6 +105,15 @@ class ShopifyTools(Toolkit):
             self.create_marketing_event,
             self.update_marketing_event,
             self.delete_marketing_event,
+            self.get_shipping_zones,
+            self.get_shipping_zone_by_id,
+            self.create_shipping_zone,
+            self.update_shipping_zone,
+            self.delete_shipping_zone,
+            self.get_shipping_rates,
+            self.create_shipping_rate,
+            self.update_shipping_rate,
+            self.delete_shipping_rate,
         ]
         super().__init__(name="shopify", tools=tools, **kwargs)
 
@@ -2671,6 +2680,389 @@ class ShopifyTools(Toolkit):
         """
         return self._execute_query(
             "marketingEventDelete", graphql_mutation, variables={"id": event_id}
+        )
+
+    async def get_shipping_rates(self, zone_id: str, limit: int = 25) -> str:
+        """
+        [Shipping] - List all rates for a specific zone.
+
+        Description: Retrieves shipping rates defined within a specific shipping zone.
+
+        Required Permissions: read_shipping
+
+        Example Usage:
+        - "List all shipping rates for zone 'gid://.../ShippingZone/123'." -> get_shipping_rates(zone_id="gid://.../ShippingZone/123")
+
+        Args:
+            zone_id (str): The GraphQL ID of the shipping zone.
+            limit (int): The maximum number of rates to return.
+
+        Returns:
+            JSON string with a list of shipping rates including their price and conditions.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "get_shipping_rates",
+                }
+            )
+        graphql_query = f'\n        {{\n          shippingZone(id: "{zone_id}") {{\n            shippingRates: priceBasedShippingRates(first: {limit}) {{\n              edges {{\n                node {{\n                  id\n                  name\n                  priceRange {{\n                    minPrice {{\n                      amount\n                    }}\n                    maxPrice {{\n                      amount\n                    }}\n                  }}\n                }}\n              }}\n            }}\n          }}\n        }}\n        '
+        return self._execute_query("get_shipping_rates", graphql_query)
+
+    async def get_shipping_zones(self, limit: int = 10) -> str:
+        """
+        [Shipping] - Retrieve a list of shipping zones.
+
+        Description: Fetches a list of shipping zones, which define regions and their shipping methods.
+
+        Required Permissions: read_shipping, write_shipping
+
+        Example Usage:
+        - "Show me all shipping zones." -> get_shipping_zones()
+
+        Args:
+            limit (int): The maximum number of shipping zones to return.
+
+        Returns:
+            JSON string with a list of shipping zones.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "get_shipping_zones",
+                }
+            )
+        graphql_query = f"\n        {{\n          shippingZones(first: {limit}) {{\n            edges {{\n              node {{\n                id\n                name\n              }}\n            }}\n          }}\n        }}\n        "
+        return self._execute_query("get_shipping_zones", graphql_query)
+
+    async def get_shipping_zone_by_id(self, zone_id: str) -> str:
+        """
+        [Shipping] - Get a specific shipping zone by its GraphQL ID.
+
+        Description: Retrieves detailed information for a single shipping zone.
+
+        Required Permissions: read_shipping, write_shipping
+
+        Example Usage:
+        - "Get details for shipping zone 'gid://.../ShippingZone/123'." -> get_shipping_zone_by_id(zone_id="gid://.../ShippingZone/123")
+
+        Args:
+            zone_id (str): The GraphQL ID of the shipping zone.
+
+        Returns:
+            JSON string with shipping zone details.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "get_shipping_zone_by_id",
+                }
+            )
+        graphql_query = f'\n        {{\n          shippingZone(id: "{zone_id}") {{\n            id\n            name\n          }}\n        }}\n        '
+        return self._execute_query("get_shipping_zone_by_id", graphql_query)
+
+    async def create_shipping_zone(self, name: str, country_code: str) -> str:
+        """
+        [Shipping] - Create a new shipping zone.
+
+        Description: Creates a new shipping zone for a specific country.
+
+        Required Permissions: write_shipping
+
+        Example Usage:
+        - "Create a shipping zone named 'USA' for country code 'US'." -> create_shipping_zone(name="USA", country_code="US")
+
+        Args:
+            name (str): The name of the shipping zone.
+            country_code (str): The ISO 3166-1 alpha-2 country code.
+
+        Returns:
+            JSON string with the created shipping zone's data.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "create_shipping_zone",
+                }
+            )
+        profile_query = "{ shop { shippingProfile { id } } }"
+        profile_result = json.loads(self._execute_query("get_profile", profile_query))
+        if not profile_result.get("success"):
+            return json.dumps(profile_result)
+        profile_id = profile_result["data"]["shop"]["shippingProfile"]["id"]
+        input_vars = {
+            "name": name,
+            "profileId": profile_id,
+            "countries": {"code": country_code},
+        }
+        graphql_mutation = """
+        mutation shippingZoneCreate($zone: ShippingZoneCreateInput!) {
+          shippingZoneCreate(zone: $zone) {
+            shippingZone {
+              id
+              name
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        return self._execute_query(
+            "shippingZoneCreate", graphql_mutation, variables={"zone": input_vars}
+        )
+
+    async def update_shipping_zone(self, zone_id: str, name: str) -> str:
+        """
+        [Shipping] - Update an existing shipping zone.
+
+        Description: Modifies the name of a shipping zone.
+
+        Required Permissions: write_shipping
+
+        Example Usage:
+        - "Update shipping zone 'gid://.../ShippingZone/123' to name 'United States'." -> update_shipping_zone(zone_id="gid://.../ShippingZone/123", name="United States")
+
+        Args:
+            zone_id (str): The GraphQL ID of the shipping zone to update.
+            name (str): The new name for the shipping zone.
+
+        Returns:
+            JSON string with the updated shipping zone data.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "update_shipping_zone",
+                }
+            )
+        input_vars = {"name": name}
+        graphql_mutation = """
+        mutation shippingZoneUpdate($id: ID!, $zone: ShippingZoneUpdateInput!) {
+          shippingZoneUpdate(id: $id, zone: $zone) {
+            shippingZone {
+              id
+              name
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        return self._execute_query(
+            "shippingZoneUpdate",
+            graphql_mutation,
+            variables={"id": zone_id, "zone": input_vars},
+        )
+
+    async def delete_shipping_zone(self, zone_id: str) -> str:
+        """
+        [Shipping] - Delete a shipping zone.
+
+        Description: Permanently removes a shipping zone.
+
+        Required Permissions: write_shipping
+
+        Example Usage:
+        - "Delete shipping zone 'gid://.../ShippingZone/123'." -> delete_shipping_zone(zone_id="gid://.../ShippingZone/123")
+
+        Args:
+            zone_id (str): The GraphQL ID of the shipping zone to delete.
+
+        Returns:
+            JSON string with the ID of the deleted shipping zone.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "delete_shipping_zone",
+                }
+            )
+        graphql_mutation = """
+        mutation shippingZoneDelete($id: ID!) {
+          shippingZoneDelete(id: $id) {
+            deletedId
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        return self._execute_query(
+            "shippingZoneDelete", graphql_mutation, variables={"id": zone_id}
+        )
+
+    async def create_shipping_rate(self, zone_id: str, name: str, price: float) -> str:
+        """
+        [Shipping] - Create a new shipping rate for a zone.
+
+        Description: Adds a price-based shipping rate to a shipping zone.
+
+        Required Permissions: write_shipping
+
+        Example Usage:
+        - "Add a 'Standard Shipping' rate of 9.99 to zone 'gid://.../Zone/123'." -> create_shipping_rate(zone_id="gid://.../Zone/123", name="Standard Shipping", price=9.99)
+
+        Args:
+            zone_id (str): The GraphQL ID of the shipping zone.
+            name (str): The name of the shipping rate (e.g., 'Standard').
+            price (float): The price of the shipping rate.
+
+        Returns:
+            JSON string with the created shipping rate's data.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "create_shipping_rate",
+                }
+            )
+        profile_query = "{ shop { shippingProfile { id } } }"
+        profile_result = json.loads(self._execute_query("get_profile", profile_query))
+        if not profile_result.get("success"):
+            return json.dumps(profile_result)
+        profile_id = profile_result["data"]["shop"]["shippingProfile"]["id"]
+        rate_input = {"name": name, "price": {"amount": str(price), "currency": "USD"}}
+        graphql_mutation = """
+        mutation shippingPriceBasedRateCreate($profileId: ID!, $zoneId: ID!, $rate: PriceBasedShippingRateInput!) {
+          shippingPriceBasedRateCreate(shippingZoneId: $zoneId, profileId: $profileId, priceBasedShippingRate: $rate) {
+            priceBasedShippingRate {
+              name
+              price {
+                amount
+              }
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        variables = {"profileId": profile_id, "zoneId": zone_id, "rate": rate_input}
+        return self._execute_query(
+            "shippingPriceBasedRateCreate", graphql_mutation, variables=variables
+        )
+
+    async def update_shipping_rate(
+        self, rate_id: str, name: Optional[str] = None, price: Optional[float] = None
+    ) -> str:
+        """
+        [Shipping] - Update an existing shipping rate.
+
+        Description: Modifies the name or price of a shipping rate.
+
+        Required Permissions: write_shipping
+
+        Example Usage:
+        - "Update shipping rate 'gid://.../Rate/456' to a price of 12.50." -> update_shipping_rate(rate_id="gid://.../Rate/456", price=12.50)
+
+        Args:
+            rate_id (str): The GraphQL ID of the shipping rate to update.
+            name (Optional[str]): The new name for the rate.
+            price (Optional[float]): The new price for the rate.
+
+        Returns:
+            JSON string with the updated shipping rate data.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "update_shipping_rate",
+                }
+            )
+        update_input = {}
+        if name:
+            update_input["name"] = name
+        if price is not None:
+            update_input["price"] = {"amount": str(price), "currency": "USD"}
+        graphql_mutation = """
+        mutation shippingPriceBasedRateUpdate($id: ID!, $rate: PriceBasedShippingRateInput!) {
+          shippingPriceBasedRateUpdate(id: $id, priceBasedShippingRate: $rate) {
+            priceBasedShippingRate {
+                id
+                name
+                price { amount }
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        variables = {"id": rate_id, "rate": update_input}
+        return self._execute_query(
+            "shippingPriceBasedRateUpdate", graphql_mutation, variables=variables
+        )
+
+    async def delete_shipping_rate(self, rate_id: str) -> str:
+        """
+        [Shipping] - Delete a shipping rate.
+
+        Description: Permanently removes a shipping rate from a zone.
+
+        Required Permissions: write_shipping
+
+        Example Usage:
+        - "Delete shipping rate 'gid://.../Rate/456'." -> delete_shipping_rate(rate_id="gid://.../Rate/456")
+
+        Args:
+            rate_id (str): The GraphQL ID of the shipping rate to delete.
+
+        Returns:
+            JSON string with the ID of the deleted rate.
+        """
+        session = await get_shopify_session()
+        if not session:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "Shopify session not available. Check credentials.",
+                    "tool": "delete_shipping_rate",
+                }
+            )
+        graphql_mutation = """
+        mutation shippingRateDelete($id: ID!) {
+          shippingRateDelete(id: $id) {
+            deletedId
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+        """
+        return self._execute_query(
+            "shippingRateDelete", graphql_mutation, variables={"id": rate_id}
         )
 
     async def get_locations(self, limit: int = 25) -> str:
