@@ -16,9 +16,11 @@ class AIModelState(rx.State):
     is_testing_openai: bool = False
     is_testing_openrouter: bool = False
     is_testing_mistral: bool = False
+    is_testing_shopify_storefront: bool = False
     openai_test_result: AITestResult | None = None
     openrouter_test_result: AITestResult | None = None
     mistral_test_result: AITestResult | None = None
+    shopify_storefront_test_result: AITestResult | None = None
 
     async def _test_openai(self, api_key: str):
         if not api_key:
@@ -96,8 +98,46 @@ class AIModelState(rx.State):
                 "error": str(e),
             }
 
+    async def _test_shopify_storefront(self, api_key: str, store_url: str):
+        if not api_key or not store_url:
+            self.shopify_storefront_test_result = {
+                "success": False,
+                "model": "shopify_storefront",
+                "error": "API key or store URL is not set.",
+            }
+            return
+        try:
+            import httpx
+
+            endpoint = f"https://{store_url}/api/2024-04/graphql.json"
+            headers = {
+                "X-Shopify-Storefront-Access-Token": api_key,
+                "Content-Type": "application/json",
+            }
+            query = {"query": "{ shop { name } }"}
+            async with httpx.AsyncClient() as client:
+                response = await client.post(endpoint, json=query, headers=headers)
+                response.raise_for_status()
+                data = response.json()
+                if "errors" in data:
+                    raise Exception(data["errors"])
+            self.shopify_storefront_test_result = {
+                "success": True,
+                "model": "shopify_storefront",
+                "error": None,
+            }
+        except Exception as e:
+            logging.exception(f"Shopify Storefront API key test failed: {e}")
+            self.shopify_storefront_test_result = {
+                "success": False,
+                "model": "shopify_storefront",
+                "error": str(e),
+            }
+
     @rx.event
-    async def test_api_key(self, model: Literal["openai", "openrouter", "mistral"]):
+    async def test_api_key(
+        self, model: Literal["openai", "openrouter", "mistral", "shopify_storefront"]
+    ):
         """Tests the API key for the specified model."""
         from app.states.settings_state import SettingsState
 
@@ -120,3 +160,11 @@ class AIModelState(rx.State):
             yield
             await self._test_mistral(settings.mistral_api_key)
             self.is_testing_mistral = False
+        elif model == "shopify_storefront":
+            self.is_testing_shopify_storefront = True
+            self.shopify_storefront_test_result = None
+            yield
+            await self._test_shopify_storefront(
+                settings.shopify_storefront_token, settings.shopify_store_url
+            )
+            self.is_testing_shopify_storefront = False

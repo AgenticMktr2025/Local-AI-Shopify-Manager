@@ -128,6 +128,61 @@ def settings_page() -> rx.Component:
                 class_name="p-6 bg-white rounded-lg border",
             ),
             rx.el.div(
+                rx.el.h2(
+                    "Shopify Storefront API", class_name="text-lg font-semibold mb-4"
+                ),
+                api_key_input(
+                    "Shopify Storefront Access Token",
+                    "shopify_storefront_token",
+                    SettingsState.shopify_storefront_token,
+                    SettingsState.set_shopify_storefront_token,
+                    SettingsState.show_shopify_storefront_token,
+                    lambda: SettingsState.toggle_visibility("shopify_storefront"),
+                ),
+                rx.el.button(
+                    "Test Storefront Token",
+                    on_click=lambda: AIModelState.test_api_key("shopify_storefront"),
+                    class_name="mt-4 w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 disabled:bg-gray-400",
+                    disabled=~SettingsState.is_shopify_storefront_token_set
+                    | AIModelState.is_testing_shopify_storefront,
+                ),
+                rx.cond(
+                    AIModelState.is_testing_shopify_storefront,
+                    rx.el.div(
+                        rx.spinner(class_name="h-4 w-4 text-gray-500"),
+                        rx.el.p("Testing...", class_name="text-sm text-gray-500"),
+                        class_name="flex items-center gap-2 mt-2",
+                    ),
+                    None,
+                ),
+                rx.cond(
+                    AIModelState.shopify_storefront_test_result,
+                    rx.cond(
+                        AIModelState.shopify_storefront_test_result["success"],
+                        rx.el.div(
+                            rx.icon(
+                                "check_check", size=16, class_name="text-green-500"
+                            ),
+                            rx.el.p(
+                                "Success! Storefront token is valid.",
+                                class_name="text-sm text-green-600",
+                            ),
+                            class_name="flex items-center gap-2 mt-2",
+                        ),
+                        rx.el.div(
+                            rx.icon("circle_x", size=16, class_name="text-red-500"),
+                            rx.el.p(
+                                f"Failed: {AIModelState.shopify_storefront_test_result['error']}",
+                                class_name="text-sm text-red-600",
+                            ),
+                            class_name="flex items-center gap-2 mt-2",
+                        ),
+                    ),
+                    None,
+                ),
+                class_name="p-6 bg-white rounded-lg border",
+            ),
+            rx.el.div(
                 rx.el.h2("AI Model API Keys", class_name="text-lg font-semibold mb-4"),
                 rx.el.div(
                     rx.el.div(

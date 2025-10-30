@@ -7,6 +7,7 @@
 2. Better encoding Shopify API permissions as vLLM/vSLM-friendly tools
 3. Improved tool descriptions and structured outputs
 4. Intelligent agent instructions and context
+5. **Full Shopify Admin + Storefront API support**
 
 ---
 
@@ -94,6 +95,40 @@
 
 ---
 
+## Phase 4.5: Add Shopify Storefront API Integration ✅
+**Goal**: Enable full Shopify Storefront API support alongside Admin API
+
+### Tasks:
+- [x] Add `SHOPIFY_STOREFRONT_TOKEN` to SettingsState with env var loading
+- [x] Add visibility toggle for storefront token in settings
+- [x] Create computed var `is_shopify_storefront_token_set` to check token status
+- [x] Add Storefront API section to settings page UI
+- [x] Implement "Test Storefront Token" functionality in AIModelState
+- [x] Add `_test_shopify_storefront()` method using GraphQL shop query
+- [x] Add storefront testing UI with spinner and success/error display
+- [x] Update ChatState to check storefront token availability
+- [x] Expose storefront API status to AI agent via system context
+- [x] Document storefront token requirement in ShopifyTools
+
+**Status**: ✅ COMPLETE
+
+**Implementation Details**:
+- **SettingsState**: Added `shopify_storefront_token` field with `is_shopify_storefront_token_set` computed var
+- **AIModelState**: Implemented `_test_shopify_storefront()` that validates token using GraphQL API
+- **Settings UI**: New "Shopify Storefront API" section with input field, visibility toggle, and test button
+- **Testing**: Uses `https://{store_url}/api/2024-04/graphql.json` endpoint with `X-Shopify-Storefront-Access-Token` header
+- **ChatState**: AIOrchestrator can access storefront credentials and expose to agent tools
+- **Environment Variable**: `SHOPIFY_STOREFRONT_TOKEN` loaded from .env file
+
+**What This Enables**:
+- Dual API support: Admin API for management operations, Storefront API for customer-facing queries
+- Separate credential management for each API type
+- Independent testing of Admin and Storefront connections
+- AI agent can use appropriate API based on task requirements
+- Future Storefront-specific tools (product catalog queries, cart operations, checkout flows)
+
+---
+
 ## Phase 5: Custom Dashboard with KPI Widgets
 **Goal**: Build visual dashboard with real-time Shopify metrics
 
@@ -125,13 +160,28 @@
 ## 📊 Current Implementation Status
 
 ### ✅ What's Working:
-- Settings page with API key management (Shopify, Mistral, OpenRouter, OpenAI)
-- Shopify API integration (9 enhanced tools with vLLM/vSLM-friendly descriptions)
-- Chat interface with streaming responses
-- Cloud-only model selection with intelligent fallback: Mistral → OpenRouter → OpenAI
-- Clean error handling and model availability detection
-- Intelligent agent instructions with Shopify-specific context
-- Native Mistral AI Studio integration for cost-effective, high-performance AI
+- **Settings Management**:
+  - Shopify Admin API credentials (store URL + access token)
+  - Shopify Storefront API credentials (store URL + storefront token)
+  - AI model API keys (Mistral, OpenRouter, OpenAI)
+  - Credential visibility toggles
+  - Independent testing for each API type
+- **Shopify Integration**:
+  - 9 enhanced Admin API tools with vLLM/vSLM-friendly descriptions
+  - Storefront API support infrastructure ready
+  - Product, Customer, and Order management capabilities
+  - GraphQL ID format support
+  - Intelligent error handling and recovery
+- **Chat Interface**:
+  - Streaming responses with multiple AI models
+  - Cloud-only model selection: Mistral → OpenRouter → OpenAI
+  - Conversation history with markdown support
+  - Processing status indicators
+  - Agent-based architecture with Agno framework
+- **API Architecture**:
+  - Dual API support (Admin + Storefront)
+  - Separate credential management and testing
+  - Ready for Storefront-specific tool development
 
 ### 🎯 Next Phase: Custom Dashboard with KPI Widgets
 
@@ -150,7 +200,7 @@
 5. **Widget customization** (add, remove, reorder widgets)
 
 **Technical Approach:**
-- Use Shopify GraphQL API to fetch order and sales data
+- Use Shopify Admin GraphQL API to fetch order and sales data
 - Create reusable KPI widget components
 - Implement data aggregation in a DashboardState
 - Add chart library for visualizations (recharts or similar)
@@ -160,13 +210,21 @@
 
 ## 📝 Notes
 
-**Phase 1-4 Summary:**
+**Phase 1-4.5 Summary:**
 - ✅ Removed all non-functional Ollama code
 - ✅ Simplified to cloud-only models (Mistral primary, OpenRouter secondary, OpenAI fallback)
-- ✅ Enhanced all 9 Shopify tools with structured, vLLM/vSLM-friendly docstrings
+- ✅ Enhanced all 9 Shopify Admin API tools with structured, vLLM/vSLM-friendly docstrings
 - ✅ Added comprehensive agent instructions with Shopify-specific context
 - ✅ Integrated Mistral AI as the primary model provider with native API support
-- System is now ready for advanced features like custom dashboards and analytics
+- ✅ **Added full Shopify Storefront API support with separate credentials and testing**
+- System now supports both Admin and Storefront APIs with independent credential management
 
 **Next Steps:**
 Phase 5 will implement a custom dashboard with KPI widgets showing real-time Shopify store metrics, enabling users to monitor their store performance at a glance.
+
+**Storefront API Use Cases** (Future Development):
+- Customer-facing product catalog queries
+- Shopping cart and checkout operations
+- Customer authentication and account management
+- Content delivery (blogs, pages, collections)
+- Real-time inventory checks for customers
