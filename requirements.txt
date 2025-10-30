@@ -14,3 +14,5 @@ ddgs
 ShopifyAPI
 mistralai
 httpx
+resend
+linear-py
