@@ -186,7 +186,7 @@ class ShopifyTools(Toolkit):
                 }
             )
         query_filter = f"title:*{search_title}*" if search_title else ""
-        graphql_query = f'\n        {{\n          products(first: {limit}, query: "{query_filter}") {{\n            edges {{\n              node {{\n                id\n                title\n                handle\n                status\n                totalInventory\n              }}\n            }}\n          }}\n        }}\n        '
+        graphql_query = f'\n        {{\n          products(first: {limit}, query: "{query_filter}") {{\n            edges {{\n              node {{\n                id\n                title\n                handle\n                status\n                totalInventory\n                variants(first: 5) {{\n                  edges {{\n                    node {{\n                      id\n                      price\n                      sku\n                    }}\n                  }}\n                }}\n              }}\n            }}\n          }}\n        }}\n        '
         return self._execute_query("get_products", graphql_query)
 
     async def get_product_by_id(self, product_id: str) -> str:
@@ -215,7 +215,7 @@ class ShopifyTools(Toolkit):
                     "tool": "get_product_by_id",
                 }
             )
-        graphql_query = f'\n        {{\n          product(id: "{product_id}") {{\n            id\n            title\n            descriptionHtml\n            status\n            vendor\n            productType\n            totalInventory\n          }}\n        }}\n        '
+        graphql_query = f'\n        {{\n          product(id: "{product_id}") {{\n            id\n            title\n            descriptionHtml\n            status\n            vendor\n            productType\n            totalInventory\n            variants(first: 10) {{\n                edges {{\n                    node {{\n                        id\n                        title\n                        price\n                        sku\n                        availableForSale\n                        inventoryQuantity\n                    }}\n                }}\n            }}\n          }}\n        }}\n        '
         return self._execute_query("get_product_by_id", graphql_query)
 
     async def create_product(
@@ -868,7 +868,7 @@ class ShopifyTools(Toolkit):
                 }
             )
         query_filter = f"status:{status}" if status else ""
-        graphql_query = f'\n        {{\n          orders(first: {limit}, query: "{query_filter}", sortKey: PROCESSED_AT, reverse: true) {{\n            edges {{\n              node {{\n                id\n                name\n                processedAt\n                displayFinancialStatus\n                displayFulfillmentStatus\n                totalPriceSet {{ shopMoney {{ amount currencyCode }} }}\n                customer {{ firstName lastName }}\n              }}\n            }}\n          }}\n        }}\n        '
+        graphql_query = f'\n        {{\n          orders(first: {limit}, query: "{query_filter}", sortKey: PROCESSED_AT, reverse: true) {{\n            edges {{\n              node {{\n                id\n                name\n                processedAt\n                displayFinancialStatus\n                displayFulfillmentStatus\n                totalPriceSet {{ shopMoney {{ amount currencyCode }} }}\n                customer {{ id firstName lastName }}\n                lineItems(first: 5) {{\n                  edges {{\n                    node {{\n                      name\n                      quantity\n                      variant {{ title }}\n                    }}\n                  }}\n                }}\n              }}\n            }}\n          }}\n        }}\n        '
         return self._execute_query("get_orders", graphql_query)
 
     async def get_order_by_id(self, order_id: str) -> str:
@@ -897,7 +897,7 @@ class ShopifyTools(Toolkit):
                     "tool": "get_order_by_id",
                 }
             )
-        graphql_query = f'\n        {{\n          order(id: "{order_id}") {{\n            id\n            name\n            processedAt\n            fullyPaid\n            totalPriceSet {{ shopMoney {{ amount currencyCode }} }}\n            lineItems(first: 10) {{\n              edges {{\n                node {{ name quantity }}\n              }}\n            }}\n            customer {{ firstName lastName }}\n          }}\n        }}\n        '
+        graphql_query = f'\n        {{\n          order(id: "{order_id}") {{\n            id\n            name\n            processedAt\n            fullyPaid\n            totalPriceSet {{ shopMoney {{ amount currencyCode }} }}\n            totalShippingPriceSet {{ shopMoney {{ amount currencyCode }} }}\n            totalTaxSet {{ shopMoney {{ amount currencyCode }} }}\n            lineItems(first: 10) {{\n              edges {{\n                node {{ name quantity sku variant {{ id title }} }}\n              }}\n            }}\n            customer {{ id firstName lastName email }}\n            shippingAddress {{ address1 city provinceCode zip country }}\n            fulfillments(first: 5) {{\n                status\n                trackingInfo {{\n                    company\n                    number\n                    url\n                }}\n            }}\n          }}\n        }}\n        '
         return self._execute_query("get_order_by_id", graphql_query)
 
     async def update_order(self, order_id: str, **kwargs) -> str:

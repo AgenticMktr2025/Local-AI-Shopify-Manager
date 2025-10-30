@@ -42,7 +42,7 @@ class AIOrchestrator:
                 models.append(
                     (
                         OpenRouter(
-                            id="mistralai/mixtral-8x7b",
+                            id="mistralai/mixtral-8x7b-instruct",
                             api_key=self.settings.openrouter_api_key,
                             base_url="https://openrouter.ai/api/v1",
                             default_headers={
@@ -50,7 +50,7 @@ class AIOrchestrator:
                                 "X-Title": "Shopify AI Manager",
                             },
                         ),
-                        "OpenRouter (Mixtral 8x7B)",
+                        "OpenRouter (Mixtral 8x7B Instruct)",
                     )
                 )
             except Exception as e:
