@@ -20,7 +20,15 @@ class AIOrchestrator:
         self.current_model_name: str = ""
 
     async def get_best_model(self) -> MistralChat | OpenAIChat | OpenRouter | None:
-        """Selects the best available model based on priority: Mistral -> OpenAI -> OpenRouter."""
+        """Selects the best available model based on priority: OpenRouter -> Mistral -> OpenAI."""
+        if self.settings.openrouter_api_key:
+            self.current_model_name = "OpenRouter (Longcat/Deepseek)"
+            logging.info(f"Using model: {self.current_model_name}")
+            return OpenRouter(
+                id=["meituan/longcat-32k-16b", "deepseek/deepseek-chat"],
+                api_key=self.settings.openrouter_api_key,
+                base_url="https://openrouter.ai/api/v1",
+            )
         if self.settings.mistral_api_key:
             self.current_model_name = "Mistral (mistral-large-latest)"
             logging.info(f"Using model: {self.current_model_name}")
@@ -31,14 +39,6 @@ class AIOrchestrator:
             self.current_model_name = "OpenAI (GPT-3.5 Turbo)"
             logging.info(f"Using model: {self.current_model_name}")
             return OpenAIChat(id="gpt-3.5-turbo", api_key=self.settings.openai_api_key)
-        if self.settings.openrouter_api_key:
-            self.current_model_name = "OpenRouter (Mistral 7B Instruct)"
-            logging.info(f"Using model: {self.current_model_name}")
-            return OpenRouter(
-                id="mistralai/mistral-7b-instruct:free",
-                api_key=self.settings.openrouter_api_key,
-                base_url="https://openrouter.ai/api/v1",
-            )
         self.current_model_name = "No model available"
         logging.warning(
             "No AI models are available. Please configure API keys in settings."
