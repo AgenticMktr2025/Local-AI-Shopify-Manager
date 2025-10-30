@@ -1,13 +1,66 @@
-# Shopify AI Management App - Refactored Plan
+# Shopify AI Management App - Enhanced Plan (Make.com Insights Integrated)
 
-## 🎯 NEW DIRECTION: Cloud-Only AI Models + Enhanced Shopify Tools
+## 🎯 VISION: AI-Powered Shopify Store Manager with Make.com-Inspired Automation
 
-**Decision**: Remove Ollama (local model) support entirely. Focus on:
+**Core Philosophy**: Build an intelligent AI assistant that combines conversational management with automated workflows inspired by Make.com's most powerful Shopify integrations.
+
+**Tech Stack**:
 1. Cloud-based AI models (Mistral AI primary, OpenRouter secondary, OpenAI fallback)
-2. Better encoding Shopify API permissions as vLLM/vSLM-friendly tools
-3. Improved tool descriptions and structured outputs
-4. Intelligent agent instructions and context
-5. **Full Shopify Admin + Storefront API support**
+2. Shopify Admin + Storefront GraphQL APIs
+3. Agno agent framework for tool orchestration
+4. Make.com-inspired automation patterns
+
+---
+
+## 🆕 NEW FEATURES INSPIRED BY MAKE.COM
+
+Based on Make.com's Shopify integration templates and automation library, the following capabilities should be added to enhance the AI Store Manager:
+
+### 📦 **Inventory & Product Management**
+- **Bulk Product Operations**: Create/update multiple products in batches
+- **Inventory Adjustments**: Adjust inventory levels with reason tracking
+- **Product Variants**: Full variant management (create, update, delete)
+- **Collections Management**: Create and manage product collections
+- **Metafields**: Read/write custom metafields for products, customers, orders
+- **Tags Management**: Automated tagging based on rules or AI suggestions
+
+### 💰 **Pricing & Promotions**
+- **Discount Code Management**: Create, update, list discount codes
+- **Price Rules**: Automated pricing adjustments based on conditions
+- **Gift Card Operations**: Create and manage gift cards
+- **Price Monitoring**: Track price changes and competitor analysis
+
+### 📧 **Customer Engagement**
+- **Email Notifications**: Automated customer emails for order status, inventory restocks
+- **Customer Segmentation**: Tag-based customer grouping for targeted campaigns
+- **Loyalty & Rewards**: Track customer lifetime value, implement reward programs
+- **Review Management**: Collect and respond to product reviews
+
+### 📊 **Order Processing & Fulfillment**
+- **Fulfillment Workflows**: Create fulfillments, assign to locations
+- **Refund Processing**: Issue refunds with reason tracking
+- **Order Tagging**: Automated order classification and prioritization
+- **Shipping Label Generation**: Integration with shipping providers
+- **Returns Management**: Handle returns and exchanges
+
+### 🔔 **Webhooks & Event Management**
+- **Real-time Webhooks**: Subscribe to Shopify events (new orders, inventory changes, etc.)
+- **Event-Driven Automation**: Trigger actions based on store events
+- **Custom Notifications**: Slack/email alerts for critical events
+
+### 📈 **Analytics & Reporting**
+- **Sales Analytics**: Revenue trends, best-selling products, AOV tracking
+- **Customer Analytics**: Customer acquisition, retention, lifetime value
+- **Inventory Reports**: Stock levels, low inventory alerts, turnover rates
+- **Custom Reports**: Export data as CSV/PDF with custom date ranges
+- **Predictive Analytics**: AI-powered sales forecasting and demand prediction
+
+### 🤖 **AI-Enhanced Features**
+- **Product Description Generator**: AI-generated SEO-optimized product descriptions
+- **Smart Tagging**: AI-suggested tags and collections for products
+- **Customer Inquiry Assistant**: AI responses to common customer questions
+- **Inventory Forecasting**: Predict stock needs based on historical data
+- **Pricing Optimization**: AI recommendations for optimal pricing
 
 ---
 
@@ -75,24 +128,6 @@
 
 **Status**: ✅ COMPLETE
 
-**Results**:
-- Successfully installed `mistralai` SDK package
-- Added Mistral API key management in SettingsState
-- Implemented Mistral API key testing in AIModelState
-- Updated AIOrchestrator with Mistral as primary model (mistral-large-latest)
-- Verified fallback chain: Mistral → OpenRouter → OpenAI → No model available
-- Settings page now includes Mistral API key input with visibility toggle
-- Chat interface displays current model name correctly
-- All tests passed: model selection, fallback logic, and UI integration
-
-**Implementation Summary**:
-- **SDK**: `mistralai` package installed and working
-- **Agno Integration**: Uses `agno.models.mistral.MistralChat` class
-- **Model ID**: `"mistral-large-latest"` for best performance
-- **API Key**: Stored in `MISTRAL_API_KEY` environment variable
-- **Priority Chain**: Mistral (1st) → OpenRouter (2nd) → OpenAI (3rd) → None
-- **UI**: Mistral section added to settings page with test functionality
-
 ---
 
 ## Phase 4.5: Add Shopify Storefront API Integration ✅
@@ -112,21 +147,6 @@
 
 **Status**: ✅ COMPLETE
 
-**Implementation Details**:
-- **SettingsState**: Added `shopify_storefront_token` field with `is_shopify_storefront_token_set` computed var
-- **AIModelState**: Implemented `_test_shopify_storefront()` that validates token using GraphQL API
-- **Settings UI**: New "Shopify Storefront API" section with input field, visibility toggle, and test button
-- **Testing**: Uses `https://{store_url}/api/2024-04/graphql.json` endpoint with `X-Shopify-Storefront-Access-Token` header
-- **ChatState**: AIOrchestrator can access storefront credentials and expose to agent tools
-- **Environment Variable**: `SHOPIFY_STOREFRONT_TOKEN` loaded from .env file
-
-**What This Enables**:
-- Dual API support: Admin API for management operations, Storefront API for customer-facing queries
-- Separate credential management for each API type
-- Independent testing of Admin and Storefront connections
-- AI agent can use appropriate API based on task requirements
-- Future Storefront-specific tools (product catalog queries, cart operations, checkout flows)
-
 ---
 
 ## Phase 4.6: Create Shopify Storefront Tools ✅
@@ -145,55 +165,111 @@
 
 **Status**: ✅ COMPLETE
 
-**Implementation Details**:
-- **File Created**: `app/tools/shopify_storefront_tools.py`
-- **Tools Implemented**:
-  1. **search_products**: Search for products in the online store using keywords
-  2. **get_product_by_handle**: Get public product details by URL handle
-- **Architecture**:
-  - Async methods throughout for non-blocking operations
-  - GraphQL queries to Storefront API endpoint
-  - Authentication via `X-Shopify-Storefront-Access-Token` header
-  - Structured JSON responses with success/error handling
-  - Comprehensive error logging
-- **Agent Integration**:
-  - Tools conditionally loaded when `is_shopify_storefront_token_set` is True
-  - System prompt updated to explain Admin vs Storefront tool usage
-  - Clear guidance: Admin for management, Storefront for customer-facing queries
-  - Tools marked with `[Storefront]` prefix for easy identification
+---
 
-**What This Enables**:
-- AI agent can now query public product catalog (what customers see)
-- Check product availability from customer perspective
-- Search products using customer-friendly terms
-- Get detailed product information by handle (URL-friendly ID)
-- Separate clear distinction between internal management and public-facing operations
+## Phase 5: Expand Admin API Tools (Make.com Inspired) 🚧
+**Goal**: Add critical Shopify Admin tools inspired by Make.com's most-used automation templates
+
+### 5A: Product & Inventory Tools
+- [ ] **Create Product Variant**: Add variants to existing products
+- [ ] **Update Product Variant**: Modify variant properties (SKU, price, inventory)
+- [ ] **Delete Product Variant**: Remove variants from products
+- [ ] **Adjust Inventory Level**: Update stock quantities with reason tracking
+- [ ] **Get Inventory Levels**: Query inventory across multiple locations
+- [ ] **Create Collection**: Create smart or manual collections
+- [ ] **Add Products to Collection**: Bulk add products to collections
+- [ ] **Manage Product Metafields**: Read/write custom product metadata
+- [ ] **Bulk Product Update**: Update multiple products in one operation
+
+### 5B: Order & Fulfillment Tools
+- [ ] **Create Fulfillment**: Mark orders as fulfilled with tracking info
+- [ ] **Update Fulfillment Status**: Update shipping status
+- [ ] **Cancel Order**: Cancel unfulfilled orders
+- [ ] **Create Refund**: Issue full or partial refunds
+- [ ] **Add Order Note**: Add internal notes to orders
+- [ ] **Tag Order**: Apply tags for order classification
+- [ ] **Get Fulfillment Orders**: Retrieve fulfillment details
+
+### 5C: Customer & Engagement Tools
+- [ ] **Tag Customer**: Apply tags for segmentation
+- [ ] **Add Customer to Segment**: Group customers by behavior
+- [ ] **Get Customer Metafields**: Retrieve custom customer data
+- [ ] **Update Customer Metafields**: Store loyalty points, preferences, etc.
+- [ ] **Search Orders by Customer Email**: Quick customer order lookup
+
+### 5D: Pricing & Promotions Tools
+- [ ] **Create Discount Code**: Generate promo codes programmatically
+- [ ] **List Discount Codes**: View all active discount codes
+- [ ] **Update Discount Code**: Modify discount rules and expiry
+- [ ] **Delete Discount Code**: Remove expired or invalid codes
+- [ ] **Create Gift Card**: Generate gift cards with custom amounts
+
+**Status**: ⏳ NEXT
 
 ---
 
-## Phase 5: Custom Dashboard with KPI Widgets
-**Goal**: Build visual dashboard with real-time Shopify metrics
+## Phase 6: Event-Driven Automation (Webhook System) 
+**Goal**: Implement real-time event monitoring and automated workflows
 
 ### Tasks:
-- [ ] Design dashboard layout with grid system
-- [ ] Implement KPI widgets (24hr order value, AOV, conversion rate)
-- [ ] Add time-based comparisons (this week vs last week)
-- [ ] Create chart components for sales trends
-- [ ] Enable widget customization (add/remove/reorder)
+- [ ] Design webhook management system for Shopify events
+- [ ] Create webhook subscription tools (new orders, inventory changes, etc.)
+- [ ] Implement event listener service for real-time notifications
+- [ ] Add Slack/email notification integration for critical events
+- [ ] Build rule-based automation engine (if X happens, do Y)
+- [ ] Create UI for managing automation rules
+- [ ] Add webhook testing and debugging tools
 
 **Status**: ⏳ BACKLOG
 
 ---
 
-## Phase 6: PDF Report Generation
-**Goal**: Export key metrics as formatted PDF reports
+## Phase 7: Advanced Analytics Dashboard
+**Goal**: Build comprehensive analytics and reporting system
+
+### 7A: Sales Analytics
+- [ ] Revenue trends (daily, weekly, monthly)
+- [ ] Best-selling products dashboard
+- [ ] Average Order Value (AOV) tracking
+- [ ] Conversion rate monitoring
+- [ ] Sales by traffic source
+
+### 7B: Customer Analytics
+- [ ] Customer lifetime value (CLV) calculation
+- [ ] Customer acquisition cost (CAC) tracking
+- [ ] Retention rate metrics
+- [ ] Customer segmentation visualization
+- [ ] Churn prediction
+
+### 7C: Inventory Analytics
+- [ ] Stock level monitoring with low inventory alerts
+- [ ] Inventory turnover rates
+- [ ] Product velocity tracking
+- [ ] Reorder point recommendations
+- [ ] Dead stock identification
+
+### 7D: Reporting Features
+- [ ] Custom date range selection
+- [ ] Export reports as CSV/PDF
+- [ ] Scheduled report generation
+- [ ] Email report delivery
+- [ ] Custom KPI widget builder
+
+**Status**: ⏳ BACKLOG
+
+---
+
+## Phase 8: AI-Enhanced Features
+**Goal**: Leverage AI for intelligent store management
 
 ### Tasks:
-- [ ] Install ReportLab or similar PDF library
-- [ ] Design PDF templates for different report types
-- [ ] Implement data aggregation for reports
-- [ ] Add export functionality to dashboard
-- [ ] Include charts and visualizations in PDFs
+- [ ] **Product Description Generator**: AI-generated SEO product descriptions
+- [ ] **Smart Tagging System**: AI-suggested tags for products/orders/customers
+- [ ] **Inventory Forecasting**: Predict stock needs using historical data
+- [ ] **Pricing Optimization**: AI recommendations for competitive pricing
+- [ ] **Customer Support Assistant**: AI-powered responses to common queries
+- [ ] **Sentiment Analysis**: Analyze customer reviews and feedback
+- [ ] **Fraud Detection**: AI-based suspicious order flagging
 
 **Status**: ⏳ BACKLOG
 
@@ -228,43 +304,43 @@
   - Tool call visibility
   - Error handling and recovery
 
-### 🎯 Comparison: Admin vs Storefront Tools
+### 🎯 Tool Inventory
 
-| Feature | Admin API Tools (9) | Storefront API Tools (2) |
-|---------|---------------------|--------------------------|
-| **Purpose** | Store management | Customer-facing queries |
-| **Authentication** | Admin Access Token | Storefront Access Token |
-| **Permissions** | Full access (read/write) | Public read-only |
-| **Tool Prefix** | None (default) | `[Storefront]` marker |
-| **Example Uses** | Create products, manage orders | Search products, check availability |
-| **Agent Guidance** | For management tasks | For customer perspective |
+| Category | Admin API Tools | Storefront API Tools |
+|----------|----------------|----------------------|
+| **Products** | 3 (get, get-by-id, create) | 2 (search, get-by-handle) |
+| **Customers** | 3 (get, update, get-orders) | - |
+| **Orders** | 3 (get, get-by-id, update) | - |
+| **Total** | **9 tools** | **2 tools** |
 
-### 🎯 Next Phase: Custom Dashboard with KPI Widgets
+### 🚀 Make.com Integration Priorities
 
-**Goal**: Build a visual dashboard featuring real-time Shopify store metrics
+Based on Make.com's most popular Shopify templates, these features should be prioritized:
 
-**Features to Implement:**
-1. **Grid-based dashboard layout** with responsive design
-2. **KPI widgets** displaying:
-   - 24-hour order value
-   - Average Order Value (AOV) - this week vs last week
-   - Conversion rate
-   - Total orders count
-   - Revenue trends
-3. **Time-based data comparisons** (current period vs previous period)
-4. **Chart visualizations** for sales trends over time
-5. **Widget customization** (add, remove, reorder widgets)
+**HIGH PRIORITY** (Phase 5):
+1. Product Variants (create, update, delete)
+2. Inventory Management (adjust levels, track across locations)
+3. Fulfillment Operations (create fulfillments, update tracking)
+4. Refund Processing (issue refunds with reasons)
+5. Discount Code Management (create, list, update, delete)
+6. Collections Management (create, add products)
+7. Metafields (product, customer, order metadata)
 
-**Technical Approach:**
-- Use Shopify Admin GraphQL API to fetch order and sales data
-- Create reusable KPI widget components
-- Implement data aggregation in a DashboardState
-- Add chart library for visualizations (recharts or similar)
-- Enable real-time data refresh
+**MEDIUM PRIORITY** (Phase 6):
+1. Webhook Subscriptions (real-time event monitoring)
+2. Order Tagging (automated classification)
+3. Customer Segmentation (tag-based grouping)
+4. Email Notifications (automated customer communications)
+
+**FUTURE ENHANCEMENTS** (Phases 7-8):
+1. Analytics Dashboard (sales, inventory, customer metrics)
+2. AI-Generated Content (product descriptions, tags)
+3. Predictive Analytics (inventory forecasting, demand prediction)
+4. Pricing Optimization (AI-powered price recommendations)
 
 ---
 
-## 📝 Notes
+## 📝 Implementation Notes
 
 **Phase 1-4.6 Summary:**
 - ✅ Removed all non-functional Ollama code
@@ -272,15 +348,14 @@
 - ✅ Enhanced all 9 Shopify Admin API tools with structured, vLLM/vSLM-friendly docstrings
 - ✅ Added comprehensive agent instructions with Shopify-specific context
 - ✅ Integrated Mistral AI as the primary model provider with native API support
-- ✅ **Added full Shopify Storefront API support with separate credentials and testing**
-- ✅ **Implemented 2 Storefront API tools with intelligent routing**
-- System now supports both Admin and Storefront APIs with intelligent tool selection
+- ✅ Added full Shopify Storefront API support with separate credentials and testing
+- ✅ Implemented 2 Storefront API tools with intelligent routing
 
-**Tool Architecture**:
-- **Total Tools**: 11 (9 Admin + 2 Storefront)
-- **Admin Tools**: Product (3), Customer (3), Order (3)
-- **Storefront Tools**: Product Search & Details (2)
-- **Future Expansion**: Collections, Cart operations, Customer accounts
+**Make.com Integration Insights:**
+- Make.com's Shopify integration offers 20+ actions, 5+ triggers, and custom GraphQL/REST API calls
+- Most popular automations: Inventory sync, order notifications, customer segmentation, discount management
+- Key workflow patterns: Event-driven (webhooks) + scheduled (batch operations) + manual (on-demand)
+- Critical features for AI Store Manager: Variants, inventory, fulfillments, refunds, discounts, metafields
 
-**Next Steps:**
-Phase 5 will implement a custom dashboard with KPI widgets showing real-time Shopify store metrics, enabling users to monitor their store performance at a glance.
+**Next Phase:**
+Phase 5 will significantly expand the Admin API tool library, adding 20+ new tools inspired by Make.com's most-used Shopify automation templates. This will transform the AI assistant into a comprehensive store management platform capable of handling complex multi-step workflows.
