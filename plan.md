@@ -3,7 +3,7 @@
 ## 🎯 NEW DIRECTION: Cloud-Only AI Models + Enhanced Shopify Tools
 
 **Decision**: Remove Ollama (local model) support entirely. Focus on:
-1. Cloud-based AI models (OpenRouter primary, OpenAI fallback)
+1. Cloud-based AI models (Mistral AI primary, OpenRouter secondary, OpenAI fallback)
 2. Better encoding Shopify API permissions as vLLM/vSLM-friendly tools
 3. Improved tool descriptions and structured outputs
 4. Intelligent agent instructions and context
@@ -25,12 +25,6 @@
 
 **Status**: ✅ COMPLETE
 
-**Results**:
-- Removed ~25 lines of non-functional Ollama code
-- Simplified model selection to cloud-only (OpenRouter → OpenAI)
-- Tested successfully: Falls back to OpenAI when OpenRouter key not set
-- No more connection errors or misleading logs
-
 ---
 
 ## Phase 2: Enhance Shopify Tools for vLLM/vSLM Compatibility ✅
@@ -47,24 +41,6 @@
 
 **Status**: ✅ COMPLETE
 
-**Results**:
-- Enhanced all 9 Shopify tools with structured docstrings
-- Added category tags: [Product Management], [Customer Management], [Order Management]
-- Included required Shopify API permissions (read_products, write_products, etc.)
-- Added concrete usage examples for each tool
-- Full type hints on all parameters
-- Tested successfully with Agno agent integration
-- All compliance checks passed ✅
-
-**Tool Enhancement Details**:
-Each tool now includes:
-- **Category Tag**: Helps AI understand tool domain
-- **Description**: Clear explanation of functionality
-- **Required Permissions**: Shopify API scopes needed
-- **Example Usage**: Natural language queries → function calls
-- **Type Hints**: Proper Python typing for parameters
-- **Return Format**: Structured JSON response description
-
 ---
 
 ## Phase 3: Improve AI Agent Instructions & Context ✅
@@ -80,26 +56,45 @@ Each tool now includes:
 
 **Status**: ✅ COMPLETE
 
-**Results**:
-- Added comprehensive Shopify system instructions to agent
-- Included guidance on GraphQL ID formats and tool categorization
-- Added multi-step workflow examples (e.g., search → verify → update)
-- Defined error handling best practices
-- Agent now understands Shopify-specific concepts and patterns
-- Instructions include permission requirements and common pitfalls
-- Tested successfully: Agent initializes with instructions
+---
 
-**System Instructions Include**:
-- **Shopify GraphQL ID Format**: Explains gid://shopify/Resource/ID pattern
-- **Tool Prioritization**: Use Shopify tools first, DuckDuckGo for general queries
-- **Action Confirmation**: Confirm successful tool execution to user
-- **Error Handling**: Inform user about errors and ask for clarification
-- **Multi-Step Workflows**: Examples like "search before update"
-- **Concise Responses**: Be clear and concise in all responses
+## Phase 4: Add Mistral AI Integration ✅
+**Goal**: Integrate Mistral AI as the primary model provider with native Agno support
+
+### Tasks:
+- [x] Install `mistralai` Python SDK package
+- [x] Add `MISTRAL_API_KEY` to settings state and UI
+- [x] Create Mistral model initialization in AIOrchestrator
+- [x] Update model priority: Mistral → OpenRouter → OpenAI
+- [x] Add Mistral API key test functionality in AIModelState
+- [x] Update settings page with Mistral API key input field
+- [x] Test Agno agent with MistralChat model
+- [x] Verify streaming responses work with Mistral
+- [x] Update current_model_name display to show Mistral
+
+**Status**: ✅ COMPLETE
+
+**Results**:
+- Successfully installed `mistralai` SDK package
+- Added Mistral API key management in SettingsState
+- Implemented Mistral API key testing in AIModelState
+- Updated AIOrchestrator with Mistral as primary model (mistral-large-latest)
+- Verified fallback chain: Mistral → OpenRouter → OpenAI → No model available
+- Settings page now includes Mistral API key input with visibility toggle
+- Chat interface displays current model name correctly
+- All tests passed: model selection, fallback logic, and UI integration
+
+**Implementation Summary**:
+- **SDK**: `mistralai` package installed and working
+- **Agno Integration**: Uses `agno.models.mistral.MistralChat` class
+- **Model ID**: `"mistral-large-latest"` for best performance
+- **API Key**: Stored in `MISTRAL_API_KEY` environment variable
+- **Priority Chain**: Mistral (1st) → OpenRouter (2nd) → OpenAI (3rd) → None
+- **UI**: Mistral section added to settings page with test functionality
 
 ---
 
-## Phase 4: Custom Dashboard with KPI Widgets
+## Phase 5: Custom Dashboard with KPI Widgets
 **Goal**: Build visual dashboard with real-time Shopify metrics
 
 ### Tasks:
@@ -113,7 +108,7 @@ Each tool now includes:
 
 ---
 
-## Phase 5: PDF Report Generation
+## Phase 6: PDF Report Generation
 **Goal**: Export key metrics as formatted PDF reports
 
 ### Tasks:
@@ -130,38 +125,48 @@ Each tool now includes:
 ## 📊 Current Implementation Status
 
 ### ✅ What's Working:
-- Settings page with API key management
-- Shopify API integration (9 enhanced tools)
+- Settings page with API key management (Shopify, Mistral, OpenRouter, OpenAI)
+- Shopify API integration (9 enhanced tools with vLLM/vSLM-friendly descriptions)
 - Chat interface with streaming responses
-- Cloud-only model selection (OpenRouter → OpenAI)
-- Clean error handling (no more Ollama connection errors)
-- vLLM/vSLM-friendly tool descriptions with examples and permissions
-- **Intelligent agent instructions with Shopify-specific context**
+- Cloud-only model selection with intelligent fallback: Mistral → OpenRouter → OpenAI
+- Clean error handling and model availability detection
+- Intelligent agent instructions with Shopify-specific context
+- Native Mistral AI Studio integration for cost-effective, high-performance AI
 
-### 🎯 Phase 3 Complete!
+### 🎯 Next Phase: Custom Dashboard with KPI Widgets
 
-**Achievements:**
-- ✅ Agent now has comprehensive Shopify instructions
-- ✅ Tool usage patterns and best practices defined
-- ✅ Multi-step workflow examples included
-- ✅ GraphQL ID format guidance added
-- ✅ Error recovery patterns documented
-- ✅ Agent tested and verified working
+**Goal**: Build a visual dashboard featuring real-time Shopify store metrics
 
-### 🚀 Ready for Phase 4
+**Features to Implement:**
+1. **Grid-based dashboard layout** with responsive design
+2. **KPI widgets** displaying:
+   - 24-hour order value
+   - Average Order Value (AOV) - this week vs last week
+   - Conversion rate
+   - Total orders count
+   - Revenue trends
+3. **Time-based data comparisons** (current period vs previous period)
+4. **Chart visualizations** for sales trends over time
+5. **Widget customization** (add, remove, reorder widgets)
 
-The foundation is now complete with enhanced tools and intelligent agent instructions. Ready to build the custom dashboard with KPI widgets!
+**Technical Approach:**
+- Use Shopify GraphQL API to fetch order and sales data
+- Create reusable KPI widget components
+- Implement data aggregation in a DashboardState
+- Add chart library for visualizations (recharts or similar)
+- Enable real-time data refresh
 
 ---
 
 ## 📝 Notes
 
-**Phase 1-3 Summary:**
-- Removed all non-functional Ollama code
-- Simplified to cloud-only models (OpenRouter primary, OpenAI fallback)
-- Enhanced all 9 Shopify tools with structured, vLLM/vSLM-friendly docstrings
-- Added comprehensive agent instructions with Shopify-specific context
-- System is now ready for advanced features like dashboards and reports
+**Phase 1-4 Summary:**
+- ✅ Removed all non-functional Ollama code
+- ✅ Simplified to cloud-only models (Mistral primary, OpenRouter secondary, OpenAI fallback)
+- ✅ Enhanced all 9 Shopify tools with structured, vLLM/vSLM-friendly docstrings
+- ✅ Added comprehensive agent instructions with Shopify-specific context
+- ✅ Integrated Mistral AI as the primary model provider with native API support
+- System is now ready for advanced features like custom dashboards and analytics
 
 **Next Steps:**
-Phase 4 will add visual dashboards with real-time KPI tracking and customizable widgets.
+Phase 5 will implement a custom dashboard with KPI widgets showing real-time Shopify store metrics, enabling users to monitor their store performance at a glance.

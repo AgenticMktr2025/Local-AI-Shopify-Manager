@@ -7,6 +7,7 @@ from agno.agent import Agent, Message
 from agno.tools.duckduckgo import DuckDuckGoTools
 from agno.models.openai import OpenAIChat
 from agno.models.openrouter import OpenRouter
+from agno.models.mistral import MistralChat
 
 
 class AIOrchestrator:
@@ -17,8 +18,14 @@ class AIOrchestrator:
         self.client_cache: dict[str, OpenAIChat | OpenRouter] = {}
         self.current_model_name: str = ""
 
-    async def get_best_model(self) -> OpenAIChat | OpenRouter | None:
-        """Selects the best available model based on priority: OpenRouter -> OpenAI."""
+    async def get_best_model(self) -> MistralChat | OpenAIChat | OpenRouter | None:
+        """Selects the best available model based on priority: Mistral -> OpenRouter -> OpenAI."""
+        if self.settings.is_mistral_key_set:
+            self.current_model_name = "Mistral (mistral-large-latest)"
+            logging.info(f"Using model: {self.current_model_name}")
+            return MistralChat(
+                id="mistral-large-latest", api_key=self.settings.mistral_api_key
+            )
         if self.settings.is_openrouter_key_set:
             self.current_model_name = "OpenRouter (Mistral)"
             logging.info(f"Using model: {self.current_model_name}")

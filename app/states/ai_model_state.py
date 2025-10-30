@@ -15,8 +15,10 @@ class AIModelState(rx.State):
 
     is_testing_openai: bool = False
     is_testing_openrouter: bool = False
+    is_testing_mistral: bool = False
     openai_test_result: AITestResult | None = None
     openrouter_test_result: AITestResult | None = None
+    mistral_test_result: AITestResult | None = None
 
     async def _test_openai(self, api_key: str):
         if not api_key:
@@ -68,8 +70,34 @@ class AIModelState(rx.State):
                 "error": str(e),
             }
 
+    async def _test_mistral(self, api_key: str):
+        if not api_key:
+            self.mistral_test_result = {
+                "success": False,
+                "model": "mistral",
+                "error": "API key is not set.",
+            }
+            return
+        try:
+            client = openai.AsyncOpenAI(
+                base_url="https://api.mistral.ai/v1", api_key=api_key
+            )
+            await client.models.list()
+            self.mistral_test_result = {
+                "success": True,
+                "model": "mistral",
+                "error": None,
+            }
+        except Exception as e:
+            logging.exception(f"Mistral API key test failed: {e}")
+            self.mistral_test_result = {
+                "success": False,
+                "model": "mistral",
+                "error": str(e),
+            }
+
     @rx.event
-    async def test_api_key(self, model: Literal["openai", "openrouter"]):
+    async def test_api_key(self, model: Literal["openai", "openrouter", "mistral"]):
         """Tests the API key for the specified model."""
         from app.states.settings_state import SettingsState
 
@@ -86,3 +114,9 @@ class AIModelState(rx.State):
             yield
             await self._test_openrouter(settings.openrouter_api_key)
             self.is_testing_openrouter = False
+        elif model == "mistral":
+            self.is_testing_mistral = True
+            self.mistral_test_result = None
+            yield
+            await self._test_mistral(settings.mistral_api_key)
+            self.is_testing_mistral = False

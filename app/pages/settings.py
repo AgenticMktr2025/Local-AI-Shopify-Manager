@@ -245,6 +245,63 @@ def settings_page() -> rx.Component:
                             None,
                         ),
                     ),
+                    rx.el.div(
+                        api_key_input(
+                            "Mistral API Key",
+                            "mistral_api_key",
+                            SettingsState.mistral_api_key,
+                            SettingsState.set_mistral_api_key,
+                            SettingsState.show_mistral_key,
+                            lambda: SettingsState.toggle_visibility("mistral"),
+                        ),
+                        rx.el.button(
+                            "Test Key",
+                            on_click=lambda: AIModelState.test_api_key("mistral"),
+                            class_name="mt-2 w-full bg-gray-200 text-gray-700 p-2 rounded-md hover:bg-gray-300 disabled:bg-gray-100",
+                            disabled=~SettingsState.is_mistral_key_set
+                            | AIModelState.is_testing_mistral,
+                        ),
+                        rx.cond(
+                            AIModelState.is_testing_mistral,
+                            rx.el.div(
+                                rx.spinner(class_name="h-4 w-4 text-gray-500"),
+                                rx.el.p(
+                                    "Testing...", class_name="text-sm text-gray-500"
+                                ),
+                                class_name="flex items-center gap-2 mt-2",
+                            ),
+                            None,
+                        ),
+                        rx.cond(
+                            AIModelState.mistral_test_result,
+                            rx.cond(
+                                AIModelState.mistral_test_result["success"],
+                                rx.el.div(
+                                    rx.icon(
+                                        "check_check",
+                                        size=16,
+                                        class_name="text-green-500",
+                                    ),
+                                    rx.el.p(
+                                        "Success! Key is valid.",
+                                        class_name="text-sm text-green-600",
+                                    ),
+                                    class_name="flex items-center gap-2 mt-2",
+                                ),
+                                rx.el.div(
+                                    rx.icon(
+                                        "circle_x", size=16, class_name="text-red-500"
+                                    ),
+                                    rx.el.p(
+                                        f"Failed: {AIModelState.mistral_test_result['error']}",
+                                        class_name="text-sm text-red-600",
+                                    ),
+                                    class_name="flex items-center gap-2 mt-2",
+                                ),
+                            ),
+                            None,
+                        ),
+                    ),
                 ),
                 class_name="p-6 bg-white rounded-lg border",
             ),

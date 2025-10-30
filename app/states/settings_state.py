@@ -12,9 +12,11 @@ class SettingsState(rx.State):
     shopify_access_token: str = os.getenv("SHOPIFY_ACCESS_TOKEN") or ""
     openai_api_key: str = os.getenv("OPENAI_API_KEY") or ""
     openrouter_api_key: str = os.getenv("OPENROUTER_API_KEY") or ""
+    mistral_api_key: str = os.getenv("MISTRAL_API_KEY") or ""
     show_shopify_token: bool = False
     show_openai_key: bool = False
     show_openrouter_key: bool = False
+    show_mistral_key: bool = False
 
     @rx.var
     def are_shopify_credentials_set(self) -> bool:
@@ -31,6 +33,11 @@ class SettingsState(rx.State):
         """Check if OpenRouter API key is set."""
         return bool(self.openrouter_api_key)
 
+    @rx.var
+    def is_mistral_key_set(self) -> bool:
+        """Check if Mistral API key is set."""
+        return bool(self.mistral_api_key)
+
     @rx.event
     def toggle_visibility(self, key: str):
         if key == "shopify":
@@ -39,3 +46,5 @@ class SettingsState(rx.State):
             self.show_openai_key = not self.show_openai_key
         elif key == "openrouter":
             self.show_openrouter_key = not self.show_openrouter_key
+        elif key == "mistral":
+            self.show_mistral_key = not self.show_mistral_key
