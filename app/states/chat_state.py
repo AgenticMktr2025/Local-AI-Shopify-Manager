@@ -75,15 +75,30 @@ class ChatState(rx.State):
         if settings.is_shopify_storefront_token_set:
             tools.append(ShopifyStorefrontTools())
         system_prompt = """
-        You are a Shopify AI Assistant. Your goal is to help users manage their Shopify store by using the provided tools. 
+        You are an expert Shopify AI Assistant for the store manager. Your primary goal is to help the manager run their store efficiently by using the provided tools. You are acting on behalf of the manager, not interacting with end customers.
 
-        - You have two sets of Shopify tools: Admin tools (default) and Storefront tools (prefixed with `[Storefront]` in the description).
-        - Use Admin tools for management tasks like creating products, updating orders, or viewing internal data.
-        - Use Storefront tools for public-facing queries, like checking what a customer sees in the online store.
-        - For general knowledge questions, use the DuckDuckGo search tool.
-        - When a user asks to perform an action (e.g., 'create a product'), use the corresponding tool and confirm the successful completion of the action.
-        - If a tool fails, inform the user about the error and ask for clarification if needed.
-        - Be concise and clear in your responses.
+        **Your Role:**
+        - You are the manager's personal assistant. When the user says "my", "I", or "me", they are referring to themselves as the store manager.
+        - You must use the available tools to answer questions and perform actions related to the Shopify store's administration.
+
+        **Tool Usage Guidelines:**
+        - **Admin Tools (Default):** Use these for all internal management tasks. This includes looking up orders, products, customers, and performing actions like creating, updating, or deleting resources. For any query about store data (e.g., "show me the last order"), you should use an Admin tool.
+        - **Storefront Tools (`[Storefront]`):** Only use these when the user explicitly asks to see something from a *customer's perspective* (e.g., "what does a customer see on the homepage?").
+        - **DuckDuckGo:** Use for general knowledge questions that are not related to the Shopify store data.
+
+        **Example Interaction:**
+        User: "when was my last order placed and for how much was it for?"
+        Assistant's Thought Process:
+        1. The user is the store manager and is asking for the most recent order in the store.
+        2. I need to find a tool to get order information.
+        3. The `get_orders` tool seems appropriate. It can fetch recent orders.
+        4. I will call `get_orders(limit=1)` to get the very last order.
+        5. After getting the order details, I will present the date and price to the user.
+
+        **Important:**
+        - Never ask the user for their customer ID or email. You have direct access to the store's data through the tools.
+        - If a tool fails, clearly state the error and suggest a possible reason if available.
+        - Be concise and action-oriented in your responses.
         """
         if model:
             self._agent = Agent(
@@ -114,8 +129,25 @@ class ChatState(rx.State):
         yield
         try:
             history = [Message(**msg) for msg in self.messages[:-1]]
+            user_query = self.messages[-1]["content"]
+            ambiguous_terms = [
+                "my order",
+                "my product",
+                "my customer",
+                "last order",
+                "recent order",
+                "my inventory",
+                "my sales",
+            ]
+            if any((term in user_query.lower() for term in ambiguous_terms)):
+                context_reminder = (
+                    "[CONTEXT: User is store manager asking about store data] "
+                )
+                enhanced_query = context_reminder + user_query
+            else:
+                enhanced_query = user_query
             response_stream = self._agent.arun(
-                self.messages[-1]["content"], history=history, stream=True
+                enhanced_query, history=history, stream=True
             )
             self.messages.append({"role": "assistant", "content": ""})
             yield
