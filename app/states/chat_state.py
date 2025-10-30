@@ -16,66 +16,58 @@ class AIOrchestrator:
 
     def __init__(self, settings_state: "rx.State"):
         self.settings = settings_state
-        self.client_cache: dict[str, OpenAIChat | OpenRouter] = {}
+        self.client_cache: dict[str, OpenAIChat | OpenRouter | MistralChat] = {}
         self.current_model_name: str = ""
 
-    async def get_best_model(
-        self, query: str = ""
-    ) -> MistralChat | OpenAIChat | OpenRouter | None:
-        """Selects the best available model based on priority and query type."""
-        deep_research_keywords = ["research", "deep dive", "analyze", "report on"]
-        is_research_query = any(
-            (keyword in query.lower() for keyword in deep_research_keywords)
-        )
+    async def get_fallback_models(
+        self,
+    ) -> list[tuple[MistralChat | OpenAIChat | OpenRouter, str]]:
+        """Returns a prioritized list of available fallback models."""
+        models = []
         if self.settings.openrouter_api_key:
             try:
-                model_id = "mistralai/ministral-8b"
-                self.current_model_name = "OpenRouter (Ministral 8B)"
-                if is_research_query:
-                    model_id = "alibaba/tongyi-deepresearch-30b-a3b:free"
-                    self.current_model_name = "OpenRouter (Tongyi DeepResearch)"
-                else:
-                    pass
-                logging.info(f"Using model: {self.current_model_name}")
-                return OpenRouter(
-                    id=model_id,
-                    api_key=self.settings.openrouter_api_key,
-                    base_url="https://openrouter.ai/api/v1",
-                    default_headers={
-                        "HTTP-Referer": "http://localhost:3000",
-                        "X-Title": "Shopify AI Manager",
-                    },
+                models.append(
+                    (
+                        OpenRouter(
+                            id="mistralai/ministral-8b",
+                            api_key=self.settings.openrouter_api_key,
+                            base_url="https://openrouter.ai/api/v1",
+                            default_headers={
+                                "HTTP-Referer": "http://localhost:3000",
+                                "X-Title": "Shopify AI Manager",
+                            },
+                        ),
+                        "OpenRouter (Ministral 8B)",
+                    )
                 )
             except Exception as e:
-                logging.exception(
-                    f"Failed to initialize primary OpenRouter model, falling back. Error: {e}"
-                )
-                self.current_model_name = "OpenRouter (Longcat 70B)"
-                logging.info(f"Using fallback model: {self.current_model_name}")
-                return OpenRouter(
-                    id="recursal/longcat-70b-instruct",
-                    api_key=self.settings.openrouter_api_key,
-                    base_url="https://openrouter.ai/api/v1",
-                    default_headers={
-                        "HTTP-Referer": "http://localhost:3000",
-                        "X-Title": "Shopify AI Manager",
-                    },
-                )
+                logging.exception(f"Could not initialize OpenRouter model: {e}")
         if self.settings.mistral_api_key:
-            self.current_model_name = "Mistral (mistral-large-latest)"
-            logging.info(f"Using model: {self.current_model_name}")
-            return MistralChat(
-                id="mistral-large-latest", api_key=self.settings.mistral_api_key
-            )
+            try:
+                models.append(
+                    (
+                        MistralChat(
+                            id="mistral-large-latest",
+                            api_key=self.settings.mistral_api_key,
+                        ),
+                        "Mistral (mistral-large-latest)",
+                    )
+                )
+            except Exception as e:
+                logging.exception(f"Could not initialize Mistral model: {e}")
         if self.settings.openai_api_key:
-            self.current_model_name = "OpenAI (GPT-3.5 Turbo)"
-            logging.info(f"Using model: {self.current_model_name}")
-            return OpenAIChat(id="gpt-3.5-turbo", api_key=self.settings.openai_api_key)
-        self.current_model_name = "No model available"
-        logging.warning(
-            "No AI models are available. Please configure API keys in settings."
-        )
-        return None
+            try:
+                models.append(
+                    (
+                        OpenAIChat(
+                            id="gpt-3.5-turbo", api_key=self.settings.openai_api_key
+                        ),
+                        "OpenAI (GPT-3.5 Turbo)",
+                    )
+                )
+            except Exception as e:
+                logging.exception(f"Could not initialize OpenAI model: {e}")
+        return models
 
 
 class ChatState(rx.State):
@@ -163,65 +155,92 @@ class ChatState(rx.State):
         question = form_data.get("question", "").strip()
         if not question or self.is_processing:
             return
+        self.is_processing = True
+        self.messages.append({"role": "user", "content": question})
         yield
-        await self._initialize_agent(question)
-        if not self._agent:
+        from app.states.settings_state import SettingsState
+        from app.tools.shopify_tools import ShopifyTools
+        from app.tools.shopify_storefront_tools import ShopifyStorefrontTools
+
+        settings = await self.get_state(SettingsState)
+        orchestrator = AIOrchestrator(settings)
+        fallback_models = await orchestrator.get_fallback_models()
+        if not fallback_models:
             self.messages.append(
                 {
                     "role": "assistant",
                     "content": "No AI models are available. Please configure API keys in settings.",
                 }
             )
-            return
-        self.is_processing = True
-        self.messages.append({"role": "user", "content": question})
-        yield
-        try:
-            history = [Message(**msg) for msg in self.messages[:-1]]
-            user_query = self.messages[-1]["content"]
-            ambiguous_terms = [
-                "my order",
-                "my product",
-                "my customer",
-                "last order",
-                "recent order",
-                "my inventory",
-                "my sales",
-                "my store",
-            ]
-            if any((term in user_query.lower() for term in ambiguous_terms)):
-                enhanced_query = f"[STORE MANAGER QUERY - Store Data Only] {user_query}"
-            else:
-                enhanced_query = user_query
-            response_stream = self._agent.arun(
-                enhanced_query, history=history, stream=True
-            )
-            assistant_message_initialized = False
-            full_response = ""
-            async for event in cast(AsyncGenerator, response_stream):
-                if hasattr(event, "content") and event.content:
-                    if not assistant_message_initialized:
-                        self.messages.append({"role": "assistant", "content": ""})
-                        assistant_message_initialized = True
-                        yield
-                    chunk = event.content
-                    if isinstance(chunk, str):
-                        full_response += chunk
-                        self.messages[-1]["content"] = full_response
-                        yield
-        except ModelProviderError as e:
-            logging.exception(f"Model provider error during agent execution: {e}")
-            error_message = "The AI model failed to respond. Please try again later or check your API key settings."
-            if assistant_message_initialized:
-                self.messages[-1]["content"] = error_message
-            else:
-                self.messages.append({"role": "assistant", "content": error_message})
-        except Exception as e:
-            logging.exception(f"Error during agent execution: {e}")
-            if assistant_message_initialized:
-                self.messages.pop()
-            self.messages.append(
-                {"role": "assistant", "content": f"An unexpected error occurred: {e}"}
-            )
-        finally:
             self.is_processing = False
+            return
+        MAX_RETRIES = 3
+        for i, (model, model_name) in enumerate(fallback_models):
+            if i >= MAX_RETRIES:
+                break
+            try:
+                self.current_model_name = model_name
+                logging.info(f"Attempt {i + 1}/{MAX_RETRIES}: Using model {model_name}")
+                tools = [DuckDuckGoTools()]
+                if settings.are_shopify_credentials_set:
+                    tools.append(ShopifyTools())
+                if settings.is_shopify_storefront_token_set:
+                    tools.append(ShopifyStorefrontTools())
+                system_prompt = "..."
+                agent = Agent(
+                    model=model,
+                    tools=tools,
+                    markdown=True,
+                    system_message=system_prompt,
+                )
+                history = [Message(**msg) for msg in self.messages[:-1]]
+                user_query = self.messages[-1]["content"]
+                response_stream = agent.arun(user_query, history=history, stream=True)
+                assistant_message_initialized = False
+                full_response = ""
+                async for event in cast(AsyncGenerator, response_stream):
+                    if hasattr(event, "content") and event.content:
+                        if not assistant_message_initialized:
+                            self.messages.append({"role": "assistant", "content": ""})
+                            assistant_message_initialized = True
+                        chunk = event.content
+                        if isinstance(chunk, str):
+                            full_response += chunk
+                            self.messages[-1]["content"] = full_response
+                            yield
+                self.is_processing = False
+                return
+            except ModelProviderError as e:
+                logging.exception(
+                    f"Model provider error with {model_name} on attempt {i + 1}: {e}"
+                )
+                if self.messages and self.messages[-1]["role"] == "assistant":
+                    self.messages.pop()
+                if i < len(fallback_models) - 1 and i < MAX_RETRIES - 1:
+                    yield rx.toast(
+                        f"Model {model_name.split('(')[0].strip()} failed, trying next...",
+                        duration=3000,
+                    )
+                    continue
+                else:
+                    self.messages.append(
+                        {
+                            "role": "assistant",
+                            "content": f"All AI models failed to respond. Please check your API keys or try again later. Error: {e}",
+                        }
+                    )
+                    break
+            except Exception as e:
+                logging.exception(
+                    f"An unexpected error occurred with {model_name}: {e}"
+                )
+                if self.messages and self.messages[-1]["role"] == "assistant":
+                    self.messages.pop()
+                self.messages.append(
+                    {
+                        "role": "assistant",
+                        "content": f"An unexpected error occurred: {e}",
+                    }
+                )
+                break
+        self.is_processing = False
