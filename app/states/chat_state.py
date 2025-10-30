@@ -181,11 +181,14 @@ class ChatState(rx.State):
             response_stream = self._agent.arun(
                 enhanced_query, history=history, stream=True
             )
-            self.messages.append({"role": "assistant", "content": ""})
-            yield
+            assistant_message_initialized = False
             full_response = ""
             async for event in cast(AsyncGenerator, response_stream):
                 if hasattr(event, "content") and event.content:
+                    if not assistant_message_initialized:
+                        self.messages.append({"role": "assistant", "content": ""})
+                        assistant_message_initialized = True
+                        yield
                     chunk = event.content
                     if isinstance(chunk, str):
                         full_response += chunk
@@ -193,6 +196,8 @@ class ChatState(rx.State):
                         yield
         except ModelProviderError as e:
             logging.exception(f"Model provider error during agent execution: {e}")
+            if assistant_message_initialized:
+                self.messages.pop()
             await self.on_load()
             self.messages.append(
                 {
@@ -202,6 +207,8 @@ class ChatState(rx.State):
             )
         except Exception as e:
             logging.exception(f"Error during agent execution: {e}")
+            if assistant_message_initialized:
+                self.messages.pop()
             self.messages.append(
                 {"role": "assistant", "content": f"An unexpected error occurred: {e}"}
             )
