@@ -1,18 +1,7 @@
 
 reflex==0.8.17
 agno
-agno-tools
 anthropic
-openai
-ollama
-python-dotenv
-google-search-results
-google-api-python-client
-google-auth-httplib2
-duckduckgo-search
-ddgs
-ShopifyAPI
-mistralai
-httpx
-resend
 linear-py
+openai
+resend
